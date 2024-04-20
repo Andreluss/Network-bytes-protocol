@@ -100,7 +100,7 @@ int tcp_establish_connection(int socket_fd) {
     return client_fd;
 }
 
-int validate_data_packet(data_packet* data_packet, uint64_t session_id) {
+int validate_data_packet(data_packet_t* data_packet, uint64_t session_id) {
     if (data_packet->session_id != session_id) {
         error("invalid session id: %" PRIu64 ", expected: %" PRIu64, data_packet->session_id, session_id);
         return -1;
@@ -108,7 +108,7 @@ int validate_data_packet(data_packet* data_packet, uint64_t session_id) {
     return 0;
 }
 
-int tcp_read_data_packet(int fd, data_packet *data, uint64_t session_id) {
+int tcp_read_data_packet(int fd, data_packet_t *data, uint64_t session_id) {
     if (readn(fd, data, DATA_PACKET_HEADER_LENGTH) != DATA_PACKET_HEADER_LENGTH) {
         error("readn: data packet (header part)");
         return -1;
@@ -157,7 +157,7 @@ int tcp_write_rcvd(int fd, uint64_t session_id) {
     return 0;
 }
 
-int print_data_packet(data_packet *data_packet) {
+int print_data_packet(data_packet_t *data_packet) {
     if (writen(STDOUT_FILENO, data_packet->data, data_packet->data_length) != data_packet->data_length) {
         error("write (received data)");
         return -1;
@@ -199,7 +199,7 @@ int tcp_start_protocol(int fd, uint64_t* session_id, uint64_t* data_length) {
 }
 
 int tcp_read_data_packets(int fd, uint64_t session_id, uint64_t data_length) {
-    static data_packet data_packet;
+    static data_packet_t data_packet;
     // Read DATA packets.
     for (uint64_t next_packet_number = 0, bytes_received = 0; bytes_received < data_length; next_packet_number++) {
         // In TCP case, the packet is *always* from the client (no need to check the source).

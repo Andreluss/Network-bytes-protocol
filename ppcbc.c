@@ -85,7 +85,7 @@ uint64_t tcp_start_protocol(int sock, size_t buf_size) {
 }
 
 void tcp_send_data_packet(int sock, uint64_t session_id, uint64_t packet_number, size_t data_size, char* data) {
-    static data_packet data_packet; // static for performance reasons
+    static data_packet_t data_packet; // static for performance reasons
     int packet_size = DATA_PACKET_HEADER_LENGTH + data_size;
     data_packet_init(&data_packet, session_id, packet_number, data_size, data);
 
@@ -231,7 +231,7 @@ uint64_t udp_start_protocol(int fd, struct sockaddr_in* server_address, size_t b
 }
 
 void udp_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_t session_id, uint64_t packet_number, size_t data_size, char* data) {
-    static data_packet data_packet; // static for performance reasons
+    static data_packet_t data_packet; // static for performance reasons
     int packet_size = DATA_PACKET_HEADER_LENGTH + data_size;
     data_packet_init(&data_packet, session_id, packet_number, data_size, data);
 
@@ -299,7 +299,6 @@ void udp(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
     // -------------- start the protocol --------------
     uint64_t session_id = udp_start_protocol(sock, server_address, buf_size);
 
-
     // -------------- send the data --------------
     udp_send_data_packets(sock, server_address, session_id, buf, buf_size);
 
@@ -318,6 +317,7 @@ int updr_packet_recvfrom(int fd, struct sockaddr_in *server_address, void* last_
         socklen_t address_length = (socklen_t) sizeof(*server_address);
         ssize_t bytes_read = recvfrom(fd, udp_recv_buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *) server_address,
                                       &address_length);
+        // TODO check if the received packet came from totally different server
         // Check if there's a timeout or an error
         if (bytes_read == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -333,26 +333,110 @@ int updr_packet_recvfrom(int fd, struct sockaddr_in *server_address, void* last_
     fatal("updr_packet_recvfrom: maximum retransmissions reached");
 }
 
-void updr_start_protocol(int fd, struct sockaddr_in* server_address, size_t buf_size) {
+int udpr_setup_connection(struct sockaddr_in *server_address) {
+    return udp_setup_connection(server_address);
+}
+
+uint64_t updr_start_protocol(int fd, struct sockaddr_in* server_address, size_t buf_size) {
     // generate the session id
     uint64_t session_id = random_64();
 
     // send the CONN packet
     conn_packet conn;
     conn_packet_init(&conn, session_id, UDPR_PROTOCOL_ID, buf_size);
+    if (udp_sendto(fd, &conn, sizeof(conn), server_address) != sizeof(conn)) {
+        syserr("updr_start_protocol: sendto (conn)");
+    }
+    int type = updr_packet_recvfrom(fd, server_address, &conn, sizeof(conn));
+    if (type == CONRJT_PACKET_TYPE) {
+        fatal("updr_start_protocol: connection rejected");
+    }
+    else if (type != CONACC_PACKET_TYPE) {
+        fatal("updr_start_protocol: unexpected packet type: %d, expected: %d", type, CONACC_PACKET_TYPE);
+    }
 
+    conacc_packet* conacc = (conacc_packet*)udp_recv_buffer;
+    if (conacc->session_id != session_id) {
+        fatal("updr_start_protocol: unexpected session id: %d in CONACC, expected: %d", conacc->session_id, session_id);
+    }
 
+    return session_id;
+}
+
+void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_t session_id, uint64_t packet_number, size_t data_size, char* data, data_packet_t* data_packet) {
+//    static data_packet_t data_packet_t; // static for performance reasons
+    int packet_size = DATA_PACKET_HEADER_LENGTH + data_size;
+    data_packet_init(data_packet, session_id, packet_number, data_size, data);
+
+    fprintf(stderr, "--> DATA [%ld] \n", packet_number);
+    if (udp_sendto(sock, data_packet, packet_size, server_address) != packet_size) {
+        syserr("write (while sending the data packet)");
+    }
+
+    int type = updr_packet_recvfrom(sock, server_address, data_packet, packet_size);
+    if (type == RJT_PACKET_TYPE) {
+        fatal("udpr_send_data_packet: packet rejected - closing the connection!");
+    }
+    else if (type != ACC_PACKET_TYPE) {
+        fatal("udpr_send_data_packet: unexpected packet type: %d, expected: %d", type, ACC_PACKET_TYPE);
+    }
+
+    acc_packet* acc = (acc_packet*)udp_recv_buffer;
+    if (acc->session_id != session_id) {
+        fatal("udpr_send_data_packet: unexpected session id: %d in ACC, expected: %d", acc->session_id, session_id);
+    }
+    acc->packet_number = be64toh(acc->packet_number);
+    if (acc->packet_number != packet_number) {
+        fatal("udpr_send_data_packet: unexpected packet number: %d in ACC, expected: %d", acc->packet_number, packet_number);
+    }
+
+    fprintf(stderr, "<-- ACC [%ld] \n", packet_number);
+}
+
+void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t session_id, char *buf, size_t buf_size, data_packet_t* last_data_packet) {
+    char* data_ptr = buf;
+    size_t bytes_left = buf_size;
+    uint64_t packet_number = 0;
+    while (bytes_left > 0) {
+        size_t data_size = bytes_left >= DATA_PACKET_LENGTH ? DATA_PACKET_LENGTH : bytes_left;
+
+        assert(DATA_PACKET_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
+        fprintf(stderr, "--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
+                packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
+
+        udpr_send_data_packet(fd, server_address, session_id, packet_number, data_size, data_ptr, last_data_packet);
+
+        fprintf(stderr, "OK\n");
+
+        bytes_left -= data_size;
+        data_ptr += data_size;
+        packet_number++;
+    }
+    fprintf(stderr, "Sent %" PRIu64 " data packets. \n", packet_number);
+}
+
+void udpr_receive_rcvd_packet(int sock, struct sockaddr_in* server_address, uint64_t session_id, void* last_sent_packet, size_t last_sent_packet_size) {
+    int type = updr_packet_recvfrom(sock, server_address, last_sent_packet, last_sent_packet_size);
+    if (type != RCVD_PACKET_TYPE) {
+        fatal("unexpected packet type: %d, expected: %d", type, RCVD_PACKET_TYPE);
+    }
+
+    fprintf(stderr, "<-- RCVD \n");
 }
 
 void udpr(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
     // Set up the UDP connection.
-    int sock = udp_setup_connection(server_address);
+    int sock = udpr_setup_connection(server_address);
 
     // -------------- start the protocol --------------
+    uint64_t session_id = updr_start_protocol(sock, server_address, buf_size);
 
     // -------------- send the data --------------
+    static data_packet_t last_data_packet;
+    udpr_send_data_packets(sock, server_address, session_id, buf, buf_size, &last_data_packet);
 
     // -------------- end the protocol --------------
+    udpr_receive_rcvd_packet(sock, server_address, session_id, &last_data_packet, sizeof(last_data_packet));
 
     // Close the connection.
     if (close(sock) == -1)

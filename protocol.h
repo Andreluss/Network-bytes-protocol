@@ -184,8 +184,8 @@ typedef struct __attribute__((__packed__)) {
     uint64_t packet_number;
     uint32_t data_length;
     uint8_t data[DATA_PACKET_MAX_DATA_LENGTH];
-} data_packet;
-#define DATA_PACKET_HEADER_LENGTH (sizeof(data_packet)-DATA_PACKET_MAX_DATA_LENGTH)
+} data_packet_t;
+#define DATA_PACKET_HEADER_LENGTH (sizeof(data_packet_t)-DATA_PACKET_MAX_DATA_LENGTH)
 
 // ACC: Potwierdzenie pakietu z danymi (S->K)
 typedef struct __attribute__((__packed__)) {
@@ -228,8 +228,8 @@ void conrjt_packet_init(conrjt_packet *packet, uint64_t session_id) {
     packet->session_id = session_id;
 }
 
-// Initialize a data_packet struct
-void data_packet_init(data_packet *packet, uint64_t session_id, uint64_t packet_number, uint32_t data_length, char* data) {
+// Initialize a data_packet_t struct
+void data_packet_init(data_packet_t *packet, uint64_t session_id, uint64_t packet_number, uint32_t data_length, char* data) {
     packet->type = DATA_PACKET_TYPE;
     packet->session_id = session_id;
     packet->packet_number = htobe64(packet_number);
