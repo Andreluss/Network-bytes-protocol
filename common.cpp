@@ -54,7 +54,7 @@ ssize_t readn(int fd, void *vptr, size_t n) {
     ssize_t nleft, nread;
     char *ptr;
 
-    ptr = vptr;
+    ptr = (char*)vptr;
     nleft = n;
     while (nleft > 0) {
         if ((nread = read(fd, ptr, nleft)) < 0)
@@ -73,7 +73,7 @@ ssize_t writen(int fd, const void *vptr, size_t n){
     ssize_t nleft, nwritten;
     const char *ptr;
 
-    ptr = vptr;               // Can't do pointer arithmetic on void*.
+    ptr = (char*)vptr;               // Can't do pointer arithmetic on void*.
     nleft = n;
     while (nleft > 0) {
         if ((nwritten = write(fd, ptr, nleft)) <= 0)

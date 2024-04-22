@@ -6,24 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdint.h>
 #include <arpa/inet.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <pthread.h>
 #include <sys/wait.h>
 #include <endian.h>
 #include <assert.h>
@@ -31,6 +15,8 @@
 #include "err.h"
 #include "common.h"
 #include "protocol.h"
+
+#include "ServerUDP.h"
 
 // functions for server side reading the packets (they convert the packets to host byte order and chck the errors automatically)
 int validate_conn_packet(conn_packet *conn, int is_tcp) {
@@ -81,8 +67,8 @@ int tcp_read_conn(int fd, conn_packet *conn) {
 int tcp_establish_connection(int socket_fd) {
     fprintf(stderr, "<*> ");
     struct sockaddr_in client_address;
-    int client_fd = accept(socket_fd, (struct sockaddr *) &client_address,
-                           &((socklen_t){sizeof(client_address)}));
+    socklen_t address_length = sizeof(client_address);
+    int client_fd = accept(socket_fd, (struct sockaddr *) &client_address, &address_length);
     if (client_fd < 0) {
         error("accept");
         return -1;
@@ -125,7 +111,7 @@ int tcp_read_data_packet(int fd, data_packet_t *data, uint64_t session_id) {
         return -1;
     }
     // print the pointers compared in the assertion below
-    assert((void*)&data->data == ((void*)data + DATA_PACKET_HEADER_LENGTH));
+    assert((void*)&data->data == ((char*)data + DATA_PACKET_HEADER_LENGTH));
     if (readn(fd, data->data, data->data_length) != data->data_length) {
         error("readn: data packet (data part)");
         return -1;
@@ -154,17 +140,6 @@ int tcp_write_rcvd(int fd, uint64_t session_id) {
         error("writen: rcvd");
         return -1;
     }
-    return 0;
-}
-
-int print_data_packet(data_packet_t *data_packet) {
-    if (writen(STDOUT_FILENO, data_packet->data, data_packet->data_length) != data_packet->data_length) {
-        error("write (received data)");
-        return -1;
-    }
-    fprintf(stderr, "<-- [");
-    writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
-    fprintf(stderr, "]\n");
     return 0;
 }
 
@@ -280,6 +255,8 @@ void tcp(uint16_t port) {
     }
 }
 
+#include <memory>
+
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         fatal("usage: %s <tcp/udp> <port>", argv[0]);
@@ -292,6 +269,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(protocol, "tcp") == 0) {
         tcp(port);
     } else if (strcmp(protocol, "udp") == 0) {
-        // udp(...
+        std::unique_ptr<ServerUDP> server = std::make_unique<ServerUDP>(port);
+        server->run();
     }
 }

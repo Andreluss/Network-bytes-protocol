@@ -157,6 +157,8 @@ char udp_recv_buffer[MAX_PACKET_SIZE];
 int get_packet_from_buffer(size_t buf_size) {
     uint8_t packet_type = *(uint8_t*)udp_recv_buffer;
     // Go through all packet types that the *client* could receive.
+    acc_packet* acc;
+    rjt_packet* rjt;
     switch (packet_type) {
         case CONACC_PACKET_TYPE:
             // Validate the conacc packet.
@@ -173,7 +175,7 @@ int get_packet_from_buffer(size_t buf_size) {
             if (buf_size != sizeof(acc_packet))
                 fatal("get_packet_from_buffer: invalid ACC packet length: %zu, expected: %zu", buf_size, sizeof(acc_packet));
             // Convert the bytes order where needed.
-            acc_packet* acc = (acc_packet*)udp_recv_buffer;
+            acc = (acc_packet*)udp_recv_buffer;
             acc->packet_number = be64toh(acc->packet_number);
             return ACC_PACKET_TYPE;
         case RJT_PACKET_TYPE:
@@ -181,7 +183,7 @@ int get_packet_from_buffer(size_t buf_size) {
             if (buf_size != sizeof(rjt_packet))
                 fatal("get_packet_from_buffer: invalid RJT packet length: %zu, expected: %zu", buf_size, sizeof(rjt_packet));
             // Convert the bytes order where needed.
-            rjt_packet* rjt = (rjt_packet*)udp_recv_buffer;
+            rjt = (rjt_packet*)udp_recv_buffer;
             rjt->packet_number = be64toh(rjt->packet_number);
             return RJT_PACKET_TYPE;
         case RCVD_PACKET_TYPE:
@@ -393,6 +395,8 @@ void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_
     fprintf(stderr, "<-- ACC [%ld] \n", packet_number);
 }
 
+void udpr_receive_acc_packet()
+
 void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t session_id, char *buf, size_t buf_size, data_packet_t* last_data_packet) {
     char* data_ptr = buf;
     size_t bytes_left = buf_size;
@@ -407,6 +411,9 @@ void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t
         udpr_send_data_packet(fd, server_address, session_id, packet_number, data_size, data_ptr, last_data_packet);
 
         fprintf(stderr, "OK\n");
+
+        fprintf(stderr, "<-? ");
+        udpr
 
         bytes_left -= data_size;
         data_ptr += data_size;
@@ -446,7 +453,7 @@ void udpr(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
 // Function that reads all data from stdin until EOF or error and saves it in a dynamically (re)allocated buffer.
 char* read_data(size_t *buf_size) {
     size_t buf_capacity = 1024;
-    char* buf = malloc(buf_capacity);
+    char* buf = (char*)malloc(buf_capacity);
     if (buf == NULL)
         syserr("malloc");
 
@@ -454,7 +461,7 @@ char* read_data(size_t *buf_size) {
     while (1) {
         if (bytes_read == buf_capacity) {
             buf_capacity *= 2;
-            buf = realloc(buf, buf_capacity);
+            buf = (char*)realloc(buf, buf_capacity);
             if (buf == NULL)
                 syserr("realloc");
         }
@@ -497,9 +504,9 @@ int main(int argc, char *argv[])
     if (strcmp(protocol, "tcp") == 0) {
         tcp(&server_address, buf, buf_size);
     } else if (strcmp(protocol, "udp") == 0) {
-         udp(&server_address, buf, buf_size);
+        udp(&server_address, buf, buf_size);
     } else if (strcmp(protocol, "udpr") == 0) {
-        // udpr(&server_address, buf, bytes_read);
+        udpr(&server_address, buf, buf_size);
     }
 
     free(buf);

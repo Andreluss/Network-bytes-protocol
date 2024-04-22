@@ -6,7 +6,7 @@
 
 #include "err.h"
 
-noreturn void syserr(const char* fmt, ...) {
+[[noreturn]] void syserr(const char* fmt, ...) {
     va_list fmt_args;
     int org_errno = errno;
 
@@ -20,7 +20,7 @@ noreturn void syserr(const char* fmt, ...) {
     exit(1);
 }
 
-noreturn void fatal(const char* fmt, ...) {
+[[noreturn]] void fatal(const char* fmt, ...) {
     va_list fmt_args;
 
     fprintf(stderr, "\tERROR: ");
