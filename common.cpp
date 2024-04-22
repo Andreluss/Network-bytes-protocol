@@ -89,7 +89,7 @@ ssize_t writen(int fd, const void *vptr, size_t n){
 }
 
 void install_signal_handler(int signal, void (*handler)(int)) {
-    struct sigaction action;
+    struct sigaction action{};
     sigset_t block_mask;
 
     sigemptyset(&block_mask);
@@ -97,8 +97,18 @@ void install_signal_handler(int signal, void (*handler)(int)) {
     action.sa_mask = block_mask;
     action.sa_flags = 0;
 
-    if (sigaction(signal, &action, NULL) < 0 ){
+    if (sigaction(signal, &action, nullptr) < 0){
         syserr("sigaction");
+    }
+}
+
+void set_socket_recv_timeout(int socket_fd, int timeout_seconds, int timeout_microseconds) {
+    struct timeval tv = {
+            .tv_sec = timeout_seconds,
+            .tv_usec = timeout_microseconds
+    };
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        syserr("setsockopt - setting recv timeout");
     }
 }
 

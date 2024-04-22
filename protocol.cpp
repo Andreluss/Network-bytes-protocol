@@ -100,13 +100,14 @@ uint8_t validate_packet(void* buf, size_t buf_size) {
     return packet_type;
 }
 
-int print_data_packet(data_packet_t *data_packet) {
+int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     if (writen(STDOUT_FILENO, data_packet->data, data_packet->data_length) != data_packet->data_length) {
         error("write (received data)");
         return -1;
     }
     fprintf(stderr, "<-- [");
     writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
-    fprintf(stderr, "]\n");
+    fprintf(stderr, "]%s", end.c_str());
+
     return 0;
 }

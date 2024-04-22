@@ -142,14 +142,6 @@ int tcp_write_rcvd(int fd, uint64_t session_id) {
     return 0;
 }
 
-int _fd;
-void sigint_handler(int signum) {
-    fprintf(stderr, " SIGINT received(%d). Closing the connection... \n", signum);
-    if (close(_fd) < 0) {
-        syserr("close");
-    }
-    exit(0);
-}
 
 int tcp_start_protocol(int fd, uint64_t* session_id, uint64_t* data_length) {
     // Read and check CONN packet.
@@ -186,7 +178,7 @@ int tcp_read_data_packets(int fd, uint64_t session_id, uint64_t data_length) {
                     data_packet.packet_number, next_packet_number);
         }
         // Print the data.
-        if (print_data_packet(&data_packet) < 0) {
+        if (print_data_packet(&data_packet, "\n") < 0) {
             return -1;
         }
         bytes_received += data_packet.data_length;
@@ -226,6 +218,12 @@ int tcp_handle_new_client(int listening_socket_fd) {
 
 /* ----- This is the server file (ppcbs.c) ---------- */
 
+
+void sigint_handler(int signum) {
+    fprintf(stderr, " SIGINT received(%d). Closing the connection... \n", signum);
+    exit(0);
+}
+
  void tcp(uint16_t port) {
     // Create a socket.
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -249,7 +247,6 @@ int tcp_handle_new_client(int listening_socket_fd) {
     if (bind(socket_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
         syserr("bind");
     }
-    _fd = socket_fd; signal(SIGINT, sigint_handler); // TODO: remove after testing
 
     // Start listening on the socket.
     if (listen(socket_fd, INT_MAX) < 0) {
@@ -273,6 +270,8 @@ int main(int argc, char *argv[]) {
     if (strcmp(protocol, "tcp") != 0 && strcmp(protocol, "udp") != 0)
         fatal("unknown server protocol: %s", protocol);
     uint16_t port = read_port(argv[2]);
+
+    install_signal_handler(SIGINT, sigint_handler);
 
     if (strcmp(protocol, "tcp") == 0) {
         tcp(port);

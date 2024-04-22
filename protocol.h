@@ -14,7 +14,6 @@
 #include <unistd.h>
 
 #define MAX_PACKET_SIZE 65535
-#define DATA_PACKET_MAX_SIZE sizeof(data_packet)
 #define DATA_PACKET_MAX_DATA_LENGTH 64000
 
 #define CONN_PACKET_TYPE 1
@@ -103,6 +102,6 @@ public:
 
 uint8_t validate_packet(void* buf, size_t buf_size);
 
-int print_data_packet(data_packet_t *data_packet);
+int print_data_packet(data_packet_t *data_packet, const std::string &end = "\n");
 
 #endif

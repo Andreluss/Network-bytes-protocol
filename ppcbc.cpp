@@ -431,7 +431,7 @@ void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t
 
         udpr_send_data_packet(fd, server_address, session_id, packet_number, data_size, data_ptr, last_data_packet);
 
-        // todo: remove after testing, this is a case of double acc
+        // todo-test: remove after testing, this is a case of double acc
 //        fprintf(stderr, "<-? ");
 //        udpr_receive_acc_packet(fd, server_address, session_id, packet_number);
 
@@ -512,15 +512,15 @@ int main(int argc, char *argv[])
     uint16_t port = read_port(argv[3]);
     struct sockaddr_in server_address = get_server_address(host, port);
 
-
     fprintf(stderr, "Reading data: \n");
     size_t buf_size;
     char* buf = read_data(&buf_size);
     if (buf_size == 0)
         fatal("empty input");
     fprintf(stderr, "Read %" PRIu64 " bytes from stdin.\n", buf_size);
+    fprintf(stderr, "Client config -> [%s:%d via %s]\n", host, port, protocol);
+    fprintf(stderr, "-----------------------------------------------------\n");
 
-    fprintf(stderr, "Client setup: %s:%d via %s.\n", host, port, protocol);
     // start the connection using the selected protocol
     if (strcmp(protocol, "tcp") == 0) {
         tcp(&server_address, buf, buf_size);

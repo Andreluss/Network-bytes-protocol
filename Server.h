@@ -22,6 +22,7 @@ protected:
     virtual void ppcb_establish_connection() = 0;
     virtual void ppcb_receive_data() = 0;
     virtual void ppcb_end_connection() = 0;
+    int port;
     struct Session {
         uint64_t session_id;
         int session_fd;
@@ -29,14 +30,12 @@ protected:
         sockaddr_in client_address;
     } session{};
     char recv_buffer[MAX_PACKET_SIZE]{};
-    virtual uint8_t receive_packet(std::function<bool(int type, void *buf)> match_packet, bool from_everyone) = 0;
-    virtual void send_packet(void* packet, size_t packet_size) = 0;
-    int port;
-    int connection_socket_fd;
+    int connection_fd = -1;
+    virtual uint8_t receive_packet_from_all(std::function<bool(int type, void *buf)> match_packet) = 0;
+    virtual uint8_t receive_packet_from_client(const std::function<bool(int, void *)> &match_packet) = 0;
+    virtual void send_packet_to_client(void* packet, size_t packet_size) = 0;
 
     void _setup_socket_with(int socket_type);
-
-    static void _set_socket_recv_timeout(int socket_fd, int timeout_seconds, int timeout_microseconds);
 };
 
 

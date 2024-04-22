@@ -23,7 +23,5 @@ ppcbc.o: ppcbc.cpp common.h protocol.h protconst.h
 ppcbs.o: ppcbs.cpp common.h protocol.h protconst.h ServerUDP.h Server.h
 protocol.o: protocol.cpp protocol.h protconst.h common.h
 
-
-
 clean:
 	rm -f $(TARGET1) $(TARGET2) *.o *~
