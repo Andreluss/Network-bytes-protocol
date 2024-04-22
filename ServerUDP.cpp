@@ -2,7 +2,6 @@
 // Created by User on 4/21/2024.
 //
 
-#include <bits/socket.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string>
@@ -11,10 +10,9 @@
 #include <stdexcept>
 #include <cassert>
 #include "ServerUDP.h"
-#include "err.h"
 #include "protconst.h"
 #include "protocol.h"
-#include "inttypes.h"
+#include <cinttypes>
 
 ServerUDP::ServerUDP(int port): Server(port) {
 }
@@ -27,6 +25,7 @@ void ServerUDP::ppcb_establish_connection() {
     fprintf(stderr, "<*> ");
 
     // Wait for a connection packet.
+    // todo: set the timeout to inf and wait for the connection packet
     auto type = receive_packet([](int type, void *buf) {
         return type == CONN_PACKET_TYPE;
     }, true);
@@ -184,20 +183,23 @@ void ServerUDP::ppcb_receive_data() {
         }, false);
         auto* data = (data_packet_t*) recv_buffer;
         fprintf(stderr, "<-- DATA "); assert(type == DATA_PACKET_TYPE);
-        // check if the packet number is correct
-        if (packet_number != data->packet_number) {
-            throw ppcb_exception("invalid packet number: " + std::to_string(data->packet_number) +
-                                 ", expected: " + std::to_string(packet_number));
-        }
         fprintf(stderr, "packet %" PRIu64 " ", data->packet_number);
         fprintf(stderr, "length %" PRIu32 "\n", data->data_length);
 
+        // check if the packet number is correct
+        if (packet_number != data->packet_number) {
+            send_rjt(data);
+            throw ppcb_exception("invalid packet number: " + std::to_string(data->packet_number) +
+                                 ", expected: " + std::to_string(packet_number));
+        }
         // check an edge-case: the last packet may have too much data
         bytes_received += data->data_length;
         if (bytes_received > session.data_length) {
+            send_rjt(data);
             throw ppcb_exception("too much data received: " + std::to_string(bytes_received) +
                                  ", expected: " + std::to_string(session.data_length));
         }
+        // --------------- data is correct ---------------
 
         // [print the data] to stdout
         print_data_packet(data);
@@ -209,5 +211,11 @@ void ServerUDP::ppcb_receive_data() {
             send_packet(&acc, sizeof(acc));
         }
     }
+}
+
+void ServerUDP::ppcb_end_connection() {
+    fprintf(stderr, "--> RCVD \n");
+    rcvd_packet rcvd; rcvd_packet_init(&rcvd, session.session_id);
+    send_packet(&rcvd, sizeof(rcvd));
 }
 

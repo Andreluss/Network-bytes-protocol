@@ -9,17 +9,21 @@ TARGET2 = ppcbs
 
 all: $(TARGET1) $(TARGET2)
 
-$(TARGET1): $(TARGET1).o err.o common.o
+$(TARGET1): $(TARGET1).o common.o protocol.o
 	$(CC) $(LFLAGS) -o $@ $^
-$(TARGET2): $(TARGET2).o err.o common.o ServerUDP.o Server.o
+$(TARGET2): $(TARGET2).o common.o protocol.o ServerUDP.o Server.o
 	$(CC) $(LFLAGS) -o $@ $^
 
 # To są zależności wygenerowane automatycznie za pomocą polecenia `gcc -MM *.c`.
-Server.o: Server.cpp Server.h err.h
-ServerUDP.o: ServerUDP.cpp ServerUDP.h Server.h
-common.o: common.cpp err.h common.h
-err.o: err.cpp err.h
-ppcbc.o: ppcbc.cpp err.h common.h protocol.h protconst.h
+Server.o: Server.cpp Server.h protocol.h protconst.h common.h
+ServerUDP.o: ServerUDP.cpp ServerUDP.h Server.h protocol.h protconst.h \
+ common.h
+common.o: common.cpp common.h
+ppcbc.o: ppcbc.cpp common.h protocol.h protconst.h
+ppcbs.o: ppcbs.cpp common.h protocol.h protconst.h ServerUDP.h Server.h
+protocol.o: protocol.cpp protocol.h protconst.h common.h
+
+
 
 clean:
 	rm -f $(TARGET1) $(TARGET2) *.o *~

@@ -12,4 +12,8 @@ ssize_t	writen(int fd, const void *vptr, size_t n);
 void install_signal_handler(int signal, void (*handler)(int));
 uint64_t random_64();
 
+[[noreturn]] void syserr(const char* fmt, ...);
+[[noreturn]] void fatal(const char* fmt, ...);
+void error(const char* fmt, ...);
+
 #endif

@@ -29,7 +29,6 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "err.h"
 #include "common.h"
 #include "protocol.h"
 
@@ -395,7 +394,27 @@ void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_
     fprintf(stderr, "<-- ACC [%ld] \n", packet_number);
 }
 
-void udpr_receive_acc_packet()
+void udpr_receive_acc_packet(int sock, struct sockaddr_in* server_address, uint64_t session_id, uint64_t packet_number) {
+    int type = updr_packet_recvfrom(sock, server_address, NULL, 0);
+    if (type == RJT_PACKET_TYPE) {
+        fatal("udpr_receive_acc_packet: packet rejected - closing the connection!");
+    }
+    else if (type != ACC_PACKET_TYPE) {
+        fatal("udpr_receive_acc_packet: unexpected packet type: %d, expected: %d", type, ACC_PACKET_TYPE);
+    }
+
+    acc_packet* acc = (acc_packet*)udp_recv_buffer;
+    if (acc->session_id != session_id) {
+        fatal("udpr_receive_acc_packet: unexpected session id: %d in ACC, expected: %d", acc->session_id, session_id);
+    }
+    acc->packet_number = be64toh(acc->packet_number);
+    if (acc->packet_number != packet_number) {
+        fatal("udpr_receive_acc_packet: unexpected packet number: %d in ACC, expected: %d", acc->packet_number, packet_number);
+    }
+
+    fprintf(stderr, "<-- ACC [%ld] \n", packet_number);
+}
+
 
 void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t session_id, char *buf, size_t buf_size, data_packet_t* last_data_packet) {
     char* data_ptr = buf;
@@ -413,7 +432,7 @@ void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t
         fprintf(stderr, "OK\n");
 
         fprintf(stderr, "<-? ");
-        udpr
+        udpr_receive_acc_packet(fd, server_address, session_id, packet_number);
 
         bytes_left -= data_size;
         data_ptr += data_size;
@@ -493,13 +512,14 @@ int main(int argc, char *argv[])
     struct sockaddr_in server_address = get_server_address(host, port);
 
 
-    fprintf(stderr, "Read data and later connect to %s:%d using %s protocol.\n", host, port, protocol);
+    fprintf(stderr, "Reading data: \n");
     size_t buf_size;
     char* buf = read_data(&buf_size);
     if (buf_size == 0)
         fatal("empty input");
     fprintf(stderr, "Read %" PRIu64 " bytes from stdin.\n", buf_size);
 
+    fprintf(stderr, "Client setup: %s:%d via %s.\n", host, port, protocol);
     // start the connection using the selected protocol
     if (strcmp(protocol, "tcp") == 0) {
         tcp(&server_address, buf, buf_size);

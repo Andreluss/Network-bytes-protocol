@@ -12,7 +12,6 @@
 #include <endian.h>
 #include <assert.h>
 
-#include "err.h"
 #include "common.h"
 #include "protocol.h"
 
@@ -199,7 +198,6 @@ int tcp_handle_new_client(int listening_socket_fd) {
     // Establish a TCP connection.
     int fd = tcp_establish_connection(listening_socket_fd);
     if (fd < 0) { return -1; }
-    _fd = fd; signal(SIGINT, sigint_handler); // TODO: remove after testing
 
     // -------------- start the protocol --------------
     uint64_t session_id; uint64_t data_length;
@@ -228,31 +226,41 @@ int tcp_handle_new_client(int listening_socket_fd) {
 
 /* ----- This is the server file (ppcbs.c) ---------- */
 
-void tcp(uint16_t port) {
+ void tcp(uint16_t port) {
     // Create a socket.
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd < 0) {
         syserr("cannot create a socket");
     }
 
+    // ------------------ warning ---------------------------
+    // Enable address reuse.
+    int optval = 1;
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        syserr("setsockopt");
+    }
+    // ------------------ warning ---------------------------
+
     // Bind the socket to a concrete address.
-    struct sockaddr_in server_address;
+    struct sockaddr_in server_address{};
     server_address.sin_family = AF_INET; // IPv4
     server_address.sin_addr.s_addr = htonl(INADDR_ANY); // Listening on all interfaces.
     server_address.sin_port = htons(port);
     if (bind(socket_fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
         syserr("bind");
     }
+    _fd = socket_fd; signal(SIGINT, sigint_handler); // TODO: remove after testing
 
     // Start listening on the socket.
     if (listen(socket_fd, INT_MAX) < 0) {
         syserr("listen");
     }
 
-    while(1) {
+    while(true) {
         printf("--------------------------------\n");
         tcp_handle_new_client(socket_fd);
     }
+    close(socket_fd);
 }
 
 #include <memory>

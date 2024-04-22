@@ -10,6 +10,7 @@
 #include "protocol.h"
 #include <string>
 #include <functional>
+#include <netinet/in.h>
 
 class Server {
 public:

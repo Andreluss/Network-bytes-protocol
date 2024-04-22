@@ -1,11 +1,9 @@
 #include "Server.h"
 #include "protconst.h"
-#include "err.h"
 #include <exception>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
-#include <bits/socket.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
