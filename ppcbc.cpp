@@ -345,6 +345,7 @@ uint64_t updr_start_protocol(int fd, struct sockaddr_in* server_address, size_t 
     // send the CONN packet
     conn_packet conn;
     conn_packet_init(&conn, session_id, UDPR_PROTOCOL_ID, buf_size);
+    fprintf(stderr, "--> CONN \n");
     if (udp_sendto(fd, &conn, sizeof(conn), server_address) != sizeof(conn)) {
         syserr("updr_start_protocol: sendto (conn)");
     }
@@ -355,6 +356,7 @@ uint64_t updr_start_protocol(int fd, struct sockaddr_in* server_address, size_t 
     else if (type != CONACC_PACKET_TYPE) {
         fatal("updr_start_protocol: unexpected packet type: %d, expected: %d", type, CONACC_PACKET_TYPE);
     }
+    fprintf(stderr, "<-- CONACC \n");
 
     conacc_packet* conacc = (conacc_packet*)udp_recv_buffer;
     if (conacc->session_id != session_id) {
@@ -369,10 +371,11 @@ void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_
     int packet_size = DATA_PACKET_HEADER_LENGTH + data_size;
     data_packet_init(data_packet, session_id, packet_number, data_size, data);
 
-    fprintf(stderr, "--> DATA [%ld] \n", packet_number);
+    fprintf(stderr, "--> DATA #%ld ", packet_number); fflush(stderr);
     if (udp_sendto(sock, data_packet, packet_size, server_address) != packet_size) {
         syserr("write (while sending the data packet)");
     }
+    fprintf(stderr, "OK\n");
 
     int type = updr_packet_recvfrom(sock, server_address, data_packet, packet_size);
     if (type == RJT_PACKET_TYPE) {
@@ -381,7 +384,6 @@ void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_
     else if (type != ACC_PACKET_TYPE) {
         fatal("udpr_send_data_packet: unexpected packet type: %d, expected: %d", type, ACC_PACKET_TYPE);
     }
-
     acc_packet* acc = (acc_packet*)udp_recv_buffer;
     if (acc->session_id != session_id) {
         fatal("udpr_send_data_packet: unexpected session id: %d in ACC, expected: %d", acc->session_id, session_id);
@@ -424,15 +426,14 @@ void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t
         size_t data_size = bytes_left >= DATA_PACKET_LENGTH ? DATA_PACKET_LENGTH : bytes_left;
 
         assert(DATA_PACKET_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
-        fprintf(stderr, "--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
+        fprintf(stderr, "--> DATA #%ld with data size %ld (total size: %ld)... ",
                 packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
 
         udpr_send_data_packet(fd, server_address, session_id, packet_number, data_size, data_ptr, last_data_packet);
 
-        fprintf(stderr, "OK\n");
-
-        fprintf(stderr, "<-? ");
-        udpr_receive_acc_packet(fd, server_address, session_id, packet_number);
+        // todo: remove after testing, this is a case of double acc
+//        fprintf(stderr, "<-? ");
+//        udpr_receive_acc_packet(fd, server_address, session_id, packet_number);
 
         bytes_left -= data_size;
         data_ptr += data_size;

@@ -24,6 +24,7 @@ void ServerUDP::setup_socket() {
 void ServerUDP::ppcb_establish_connection() {
     fprintf(stderr, "<*> ");
 
+    session.session_fd = connection_socket_fd; // the same as the server socket
     // Wait for a connection packet.
     // todo: set the timeout to inf and wait for the connection packet
     auto type = receive_packet([](int type, void *buf) {
@@ -183,8 +184,8 @@ void ServerUDP::ppcb_receive_data() {
         }, false);
         auto* data = (data_packet_t*) recv_buffer;
         fprintf(stderr, "<-- DATA "); assert(type == DATA_PACKET_TYPE);
-        fprintf(stderr, "packet %" PRIu64 " ", data->packet_number);
-        fprintf(stderr, "length %" PRIu32 "\n", data->data_length);
+        fprintf(stderr, "packet #%" PRIu64 " ", data->packet_number);
+        fprintf(stderr, "with %" PRIu32 "B\n", data->data_length);
 
         // check if the packet number is correct
         if (packet_number != data->packet_number) {

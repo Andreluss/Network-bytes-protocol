@@ -1,5 +1,5 @@
 CC     = g++
-CFLAGS = -Wall -Wextra -O2 -std=gnu17
+CFLAGS = -Wall -Wextra -O2 -std=gnu17 -g
 LFLAGS =
 
 .PHONY: all clean

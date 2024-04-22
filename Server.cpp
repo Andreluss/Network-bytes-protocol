@@ -25,7 +25,7 @@ void Server::run() {
             new_session();
         }
         catch (const std::exception& e) {
-            error("ERROR: %s", e.what());
+            error("%s", e.what());
         }
 
     }
