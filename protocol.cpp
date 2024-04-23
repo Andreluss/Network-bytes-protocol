@@ -114,3 +114,55 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
 
     return 0;
 }
+
+// Reads, but doesn't really validate the packet from the stream (e.g. tcp socket).
+// Returns the number of bytes read or -1 if an error occurred.
+ssize_t read_packet_from_stream(int sock, void* buffer) {
+    char* ptr = (char*) buffer;
+
+    // read the first byte to determine the packet type
+    if (readn(sock, ptr, 1) <= 0) return -1;
+    ssize_t total_bytes_read = 1;
+    uint8_t packet_type = *ptr;
+    ptr += 1;
+
+    auto read_n_bytes = [&](ssize_t n)->ssize_t {
+        ssize_t bytes_read = readn(sock, ptr, n);
+        if (bytes_read != n) return -1;
+        total_bytes_read += bytes_read;
+        ptr += bytes_read;
+        return bytes_read;
+    };
+
+    if (packet_type == CONN_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(conn_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == CONACC_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(conacc_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == CONRJT_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(conrjt_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == DATA_PACKET_TYPE) {
+        if (read_n_bytes(DATA_PACKET_HEADER_LENGTH - 1) < 0) return -1;
+        uint32_t data_length = ((data_packet_t*) buffer)->data_length;
+        data_length = be32toh(data_length);
+        if (data_length > DATA_PACKET_MAX_DATA_LENGTH || data_length == 0) {
+            fprintf(stderr, "~ tcp read - invalid data length: %d\n", data_length);
+            return -1;
+        }
+        if (read_n_bytes(data_length) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == ACC_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(acc_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == RJT_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(rjt_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else if (packet_type == RCVD_PACKET_TYPE) {
+        if (read_n_bytes(sizeof(rcvd_packet)-1) < 0) return -1;
+        return total_bytes_read;
+    } else {
+        return -1;
+    }
+}

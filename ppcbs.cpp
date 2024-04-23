@@ -1,21 +1,19 @@
-#include <fcntl.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cinttypes>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <endian.h>
-#include <assert.h>
+#include <cassert>
 
 #include "common.h"
 #include "protocol.h"
-
 #include "ServerUDP.h"
+
 
 // functions for server side reading the packets (they convert the packets to host byte order and chck the errors automatically)
 int validate_conn_packet(conn_packet *conn, int is_tcp) {
@@ -54,7 +52,7 @@ int tcp_read_conn(int fd, conn_packet *conn) {
 // Returns a new socket connected to the server or -1 on error
 int tcp_establish_connection(int socket_fd) {
     fprintf(stderr, "<*> ");
-    struct sockaddr_in client_address;
+    struct sockaddr_in client_address{};
     socklen_t address_length = sizeof(client_address);
     int client_fd = accept(socket_fd, (struct sockaddr *) &client_address, &address_length);
     if (client_fd < 0) {
@@ -209,7 +207,7 @@ void sigint_handler(int signum) {
     exit(0);
 }
 
- void tcp(uint16_t port) {
+[[noreturn]] void tcp(uint16_t port) {
     // Create a socket.
     int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_fd < 0) {
@@ -245,10 +243,7 @@ void sigint_handler(int signum) {
         printf("--------------------------------\n");
         tcp_handle_new_client(socket_fd);
     }
-    close(socket_fd);
 }
-
-#include <memory>
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
@@ -264,7 +259,6 @@ int main(int argc, char *argv[]) {
     if (strcmp(protocol, "tcp") == 0) {
         tcp(port);
     } else if (strcmp(protocol, "udp") == 0) {
-        std::unique_ptr<ServerUDP> server = std::make_unique<ServerUDP>(port);
-        server->run();
+        ServerUDP(port).run();
     }
 }

@@ -12,6 +12,7 @@
 #include "protocol.h"
 #include "ClientUDP.h"
 #include "ClientUDPR.h"
+#include "ClientTCP.h"
 
 // Returns a new socket connected to the server or -1 on error
 int tcp_establish_connection(struct sockaddr_in *server_address) {
@@ -188,6 +189,7 @@ int main(int argc, char *argv[])
     } else {
         fprintf(stderr, "What do you think we do here? We are not in Fidelio. \n");
         // testing purposes
+        ClientTCP(buf, buf_size, server_address, port).run();
     }
 
     free(buf);

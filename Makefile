@@ -12,7 +12,7 @@ TARGET2 = ppcbs
 
 all: $(TARGET1) $(TARGET2)
 
-$(TARGET1): $(addprefix $(OBJDIR)/, $(TARGET1).o common.o protocol.o Client.o ClientUDP.o ClientUDPR.o)
+$(TARGET1): $(addprefix $(OBJDIR)/, $(TARGET1).o common.o protocol.o Client.o ClientUDP.o ClientUDPR.o ClientTCP.o)
 	$(CC) $(LFLAGS) -o $@ $^
 $(TARGET2): $(addprefix $(OBJDIR)/, $(TARGET2).o common.o protocol.o ServerUDP.o Server.o)
 	$(CC) $(LFLAGS) -o $@ $^
@@ -21,6 +21,7 @@ $(TARGET2): $(addprefix $(OBJDIR)/, $(TARGET2).o common.o protocol.o ServerUDP.o
 $(OBJDIR)/Client.o: Client.cpp Client.h protocol.h protconst.h common.h
 $(OBJDIR)/ClientUDP.o: ClientUDP.cpp ClientUDP.h Client.h protocol.h protconst.h common.h
 $(OBJDIR)/ClientUDPR.o: ClientUDPR.cpp ClientUDPR.h ClientUDP.h Client.h protocol.h protconst.h common.h
+$(OBJDIR)/ClientTCP.o: ClientTCP.cpp ClientTCP.h Client.h protocol.h protconst.h common.h
 $(OBJDIR)/Server.o: Server.cpp Server.h protocol.h protconst.h common.h
 $(OBJDIR)/ServerUDP.o: ServerUDP.cpp ServerUDP.h Server.h protocol.h protconst.h common.h
 $(OBJDIR)/common.o: common.cpp common.h
