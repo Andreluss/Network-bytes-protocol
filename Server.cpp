@@ -25,7 +25,7 @@ void Server::run() {
             new_session();
         }
         catch (const ppcb_exception& e) {
-            fprintf(stderr, "%s. Closing the connection... /x.x\\\n", e.what());
+            fprintf(stderr, "ERROR: %s ->- disconnected /x.x\\\n", e.what());
         }
         catch (const std::runtime_error& e) {
             error("runtime-error -> %s", e.what());

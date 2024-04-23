@@ -56,6 +56,9 @@ void Client::ppcb_establish_connection() {
         }
     });
     fprintf(stderr, "<-- %s\n", packet_type == CONACC_PACKET_TYPE ? "CONACC" : "CONRJT");
+    if (packet_type == CONRJT_PACKET_TYPE) {
+        throw ppcb_exception("connection rejected - shutting down");
+    }
 }
 
 void Client::ppcb_send_data() {

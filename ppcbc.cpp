@@ -490,8 +490,9 @@ int main(int argc, char *argv[])
 
     // read the protocol, host and port
     const char *protocol = argv[1];
-//    if (strcmp(protocol, "tcp") != 0 && strcmp(protocol, "udp") != 0 && strcmp(protocol, "udpr") != 0)
-//        fatal("unknown protocol: %s", protocol);
+    std::vector<std::string> valid_protocols = {"tcp", "udp", "udpr", "fidelio"};
+    if (std::find(valid_protocols.begin(), valid_protocols.end(), protocol) == valid_protocols.end())
+        fatal("unknown protocol: %s", protocol);
     const char *host = argv[2];
     uint16_t port = read_port(argv[3]);
     struct sockaddr_in server_address = get_server_address(host, port);
@@ -509,11 +510,12 @@ int main(int argc, char *argv[])
     if (strcmp(protocol, "tcp") == 0) {
         tcp(&server_address, buf, buf_size);
     } else if (strcmp(protocol, "udp") == 0) {
-        udp(&server_address, buf, buf_size);
+        ClientUDP(buf, buf_size, server_address, port).run();
     } else if (strcmp(protocol, "udpr") == 0) {
-        udpr(&server_address, buf, buf_size);
-    } else {
         ClientUDPR(buf, buf_size, server_address, port).run();
+    } else {
+        fprintf(stderr, "What do you think we do here? We are not in Fidelio. \n");
+        // testing purposes
     }
 
     free(buf);
