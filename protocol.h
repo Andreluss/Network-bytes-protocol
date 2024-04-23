@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <cassert>
+#include <utility>
 #include "protconst.h"
 #include "common.h"
 #include <unistd.h>
 
 #define MAX_PACKET_SIZE 65535
 #define DATA_PACKET_MAX_DATA_LENGTH 64000
+#define DATA_PACKET_LENGTH 16
 
 #define CONN_PACKET_TYPE 1
 #define CONACC_PACKET_TYPE 2
@@ -92,10 +94,10 @@ void rcvd_packet_init(rcvd_packet *packet, uint64_t session_id);
 
 class ppcb_exception : public std::exception {
 private:
-    const std::string& message;
+    std::string message;
 public:
-    explicit ppcb_exception(const std::string& msg) : message(msg) {}
-    const char* what () {
+    explicit ppcb_exception(std::string  msg) : message(std::move(msg)) {}
+    [[nodiscard]] const char* what () const noexcept override {
         return message.c_str();
     }
 };

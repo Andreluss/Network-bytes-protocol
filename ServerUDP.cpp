@@ -27,7 +27,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
             return false;
         }
         else {
-            throw std::runtime_error("recvfrom");
+            throw std::runtime_error("recvfrom - system function failed to receive packet");
         }
     }
 
@@ -38,18 +38,20 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
         // 3. check the sender of the packet
         if (!accept_all_senders) {
             // if the sender is not the same as the client
-            if (sockaddr_in_equal(recv_packet_address, session.client_address)) {
+
+            if (!sockaddr_in_equal(recv_packet_address, session.client_address)) {
                 if (packet_type == CONN_PACKET_TYPE) {
                     auto* conn = (conn_packet*) recv_buffer;
                     // if the other client sends CONN, then answer with CONRJT
                     conrjt_packet conrjt; conrjt_packet_init(&conrjt, conn->session_id);
                     send_packet_to_client(&conrjt, sizeof(conrjt));
-                    throw ppcb_exception("--> CONRJT to " + std::to_string(recv_packet_address.sin_addr.s_addr) +
+                    throw ppcb_exception("--> CONRJT to " + std::string(inet_ntoa(recv_packet_address.sin_addr)) +
                                          ":" + std::to_string(recv_packet_address.sin_port));
                 }
                 else {
-                    throw ppcb_exception("<-- [packet " + std::to_string(packet_type) + "] from not-connected sender: " + std::to_string(recv_packet_address.sin_addr.s_addr) +
-                                         ":" + std::to_string(recv_packet_address.sin_port));
+                    throw ppcb_exception("[packet " + std::to_string(packet_type) + "] from unknown sender: "
+                                    + std::string(inet_ntoa(recv_packet_address.sin_addr))
+                                    + ":" + std::to_string(recv_packet_address.sin_port));
                 }
             }
         }
@@ -59,11 +61,11 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
             return true;
         }
         else {
-            throw ppcb_exception("packet does not match the requirements");
+            throw ppcb_exception("[packet " + std::to_string(packet_type) + "] not matching requirements");
         }
     }
     catch (ppcb_exception &e) {
-        fprintf(stderr, "x-- SKIP (%s) \n", e.what());
+        fprintf(stderr, "x-- skip %s \n", e.what());
     }
     return false;
 }
@@ -81,11 +83,10 @@ bool ServerUDP::try_receive_packet(const std::function<bool(int, void *)> &match
 //        time_point<system_clock> end = system_clock::now();
 //        auto elapsed = duration_cast<microseconds>(end - start).count();
         ssize_t received_length{};
-        auto elapsed = measure_time_microseconds([&](){
+        microseconds_left -= measure_time_microseconds([&](){
             received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
                                         (struct sockaddr *) &recv_packet_address, &recv_packet_address_len);
         });
-        microseconds_left -= elapsed;
 
         if (check_recv_packet(match_packet, received_length, false)) {
             if (received_packet_type != nullptr) {
@@ -109,11 +110,12 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                fprintf(stderr, "--RETRANSMIT (%d tries left)-> \n", retransmissions_left - 1);
+                fprintf(stderr, "-r-> ret [packet %d] (attempt %d/%d)\n", packet_type,
+                        retransmissions - retransmissions_left + 1, retransmissions);
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
                 continue;
             } else {
-                throw ppcb_exception("/x.x\\ TIMEOUT - PACKET " + std::to_string(packet_type) + " DIDN'T ARRIVE");
+                throw ppcb_exception("/x.x\\ Timeout - packet didn't arrive");
             }
         }
     }

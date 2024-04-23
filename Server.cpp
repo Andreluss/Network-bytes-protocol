@@ -1,6 +1,6 @@
 #include "Server.h"
 #include "protconst.h"
-#include <exception>
+#include <stdexcept>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -18,16 +18,18 @@ void Server::run() {
     };
     sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
-    sigaction(SIGINT, &action, NULL);
+    sigaction(SIGINT, &action, nullptr);
 
     for(;;) {
         try {
             new_session();
         }
-        catch (const std::exception& e) {
-            error("%s", e.what());
+        catch (const ppcb_exception& e) {
+            fprintf(stderr, "%s. Closing the connection...\n", e.what());
         }
-
+        catch (const std::runtime_error& e) {
+            error("runtime-error -> %s", e.what());
+        }
     }
 }
 

@@ -1,9 +1,10 @@
 #ifndef MIM_COMMON_H
 #define MIM_COMMON_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <sys/types.h>
+#include <functional>
 
 uint16_t read_port(char const *string);
 struct sockaddr_in get_server_address(char const *host, uint16_t port);

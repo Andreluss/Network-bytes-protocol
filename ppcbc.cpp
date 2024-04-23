@@ -13,8 +13,7 @@
 
 #include "common.h"
 #include "protocol.h"
-
-#define DATA_PACKET_LENGTH (16) // This should be changed in testing
+#include "ClientUDP.h"
 
 // Returns a new socket connected to the server or -1 on error
 int tcp_establish_connection(struct sockaddr_in *server_address) {
@@ -511,7 +510,7 @@ int main(int argc, char *argv[])
     } else if (strcmp(protocol, "udpr") == 0) {
         udpr(&server_address, buf, buf_size);
     } else {
-
+        ClientUDP(buf, buf_size, server_address, port).run();
     }
 
     free(buf);

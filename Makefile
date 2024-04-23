@@ -22,7 +22,7 @@ Server.o: Server.cpp Server.h protocol.h protconst.h common.h
 ServerUDP.o: ServerUDP.cpp ServerUDP.h Server.h protocol.h protconst.h \
  common.h
 common.o: common.cpp common.h
-ppcbc.o: ppcbc.cpp common.h protocol.h protconst.h
+ppcbc.o: ppcbc.cpp common.h protocol.h protconst.h ClientUDP.h Client.h
 ppcbs.o: ppcbs.cpp common.h protocol.h protconst.h ServerUDP.h Server.h
 protocol.o: protocol.cpp protocol.h protconst.h common.h
 

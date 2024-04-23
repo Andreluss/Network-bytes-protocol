@@ -12,8 +12,11 @@
 class Client {
 public:
     void run();
-    explicit Client(const char* data, size_t data_size, uint8_t protocol_id, sockaddr_in server_address, int port, bool data_ack = false) :
-            data_to_send(data), data_to_send_size(data_size), c_protocol_id(protocol_id), server_address(server_address), port(port), c_data_ack(data_ack) {}
+    explicit Client(uint8_t protocol_id, const char *data, size_t data_size, sockaddr_in server_address, int port,
+                    bool data_ack = false) :
+            data_to_send(data), data_to_send_size(data_size),
+            c_protocol_id(protocol_id), server_address(server_address),
+            port(port), c_data_ack(data_ack) {}
 protected:
     const char* data_to_send;
     const size_t data_to_send_size;

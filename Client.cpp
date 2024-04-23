@@ -21,14 +21,14 @@ void Client::run() {
         ppcb_send_data();
         ppcb_end_connection();
     }
-    catch (const std::exception& e) {
+    catch (const ppcb_exception& e) {
         fatal("%s", e.what());
     }
 }
 
 void Client::ppcb_establish_connection() {
     session_id = random_64();
-    conn_packet conn; conn_packet_init(&conn, session_id, c_protocol_id, 0);
+    conn_packet conn; conn_packet_init(&conn, session_id, c_protocol_id, data_to_send_size);
     send_packet_to_server(&conn, sizeof(conn)); fprintf(stderr, "--> CONN \n");
 
     // receive packet from server which should be either conacc or connrjt
@@ -59,13 +59,15 @@ void Client::ppcb_send_data() {
     size_t data_left = data_to_send_size;
     uint64_t packet_number = 0;
     while (data_left > 0) {
-        size_t data_length = std::min(data_left, (size_t)DATA_PACKET_MAX_DATA_LENGTH);
+        size_t data_length = std::min(data_left, (size_t)DATA_PACKET_LENGTH);
         data_packet_t data_packet; data_packet_init(&data_packet, session_id, packet_number, data_length, data_ptr);
 
         send_packet_to_server(&data_packet, DATA_PACKET_HEADER_LENGTH + data_length);
         fprintf(stderr, "--> DATA #%zu [%zu bytes]\n", packet_number, data_length);
 
         if (c_data_ack) {
+            fprintf(stderr, "?a.. ");
+            fflush(stderr);
             ppcb_get_ack(packet_number);
         }
 

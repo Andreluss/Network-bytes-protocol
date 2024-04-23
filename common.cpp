@@ -12,7 +12,6 @@
 #include <csignal>
 #include <cstdarg>
 #include <chrono>
-#include <functional>
 #include "common.h"
 
 uint16_t read_port(char const *string) {
@@ -136,7 +135,7 @@ uint64_t random_64() {
 [[noreturn]] void fatal(const char* fmt, ...) {
     va_list fmt_args;
 
-    fprintf(stderr, "\tERROR: ");
+    fprintf(stderr, "ERROR: ");
 
     va_start(fmt_args, fmt);
     vfprintf(stderr, fmt, fmt_args);
@@ -150,7 +149,7 @@ void error(const char* fmt, ...) {
     va_list fmt_args;
     int org_errno = errno;
 
-    fprintf(stderr, "\tERROR: ");
+    fprintf(stderr, "ERROR: ");
 
     va_start(fmt_args, fmt);
     vfprintf(stderr, fmt, fmt_args);
