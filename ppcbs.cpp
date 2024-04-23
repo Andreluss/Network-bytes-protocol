@@ -34,7 +34,7 @@ int validate_conn_packet(conn_packet *conn, int is_tcp) {
         }
     }
     conn->data_length = be64toh(conn->data_length);
-    if (conn->data_length < 1 || conn->data_length > DATA_PACKET_MAX_DATA_LENGTH) {
+    if (conn->data_length < 1) {
         error("conn: invalid data length: %" PRIu64, conn->data_length);
         return -1;
     }

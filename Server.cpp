@@ -12,7 +12,7 @@ void Server::run() {
     // Signal handling - to ensure that the server will close the port.
     struct sigaction action{};
     action.sa_handler = [](int sig) {
-        fprintf(stderr, "\\['']/ Signal %d received - closing!\n", sig);
+        fprintf(stderr, " Signal %d received \\['']/ - closing!\n", sig);
         exit(0);
     };
     sigemptyset(&action.sa_mask);

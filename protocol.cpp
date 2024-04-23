@@ -108,7 +108,7 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     // flush stdout to make sure the data is printed
     fflush(stdout);
 
-    fprintf(stderr, "<-- [");
+    fprintf(stderr, "<-- [%3zu] [", data_packet->packet_number);
     writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
     fprintf(stderr, "]%s", end.c_str());
 
