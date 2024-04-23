@@ -38,8 +38,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
         // 3. check the sender of the packet
         if (!accept_all_senders) {
             // if the sender is not the same as the client
-            if (recv_packet_address.sin_addr.s_addr != session.client_address.sin_addr.s_addr ||
-                recv_packet_address.sin_port != session.client_address.sin_port) {
+            if (sockaddr_in_equal(recv_packet_address, session.client_address)) {
                 if (packet_type == CONN_PACKET_TYPE) {
                     auto* conn = (conn_packet*) recv_buffer;
                     // if the other client sends CONN, then answer with CONRJT
@@ -75,12 +74,17 @@ bool ServerUDP::try_receive_packet(const std::function<bool(int, void *)> &match
         set_socket_recv_timeout(session.session_fd, static_cast<int>(microseconds_left / 1000000),
                                                      static_cast<int>(microseconds_left % 1000000));
 
-        using std::chrono::system_clock, std::chrono::time_point, std::chrono::duration_cast, std::chrono::microseconds;
-        time_point<system_clock> start = system_clock::now();
-        ssize_t received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
-                                           (struct sockaddr *) &recv_packet_address, &recv_packet_address_len);
-        time_point<system_clock> end = system_clock::now();
-        auto elapsed = duration_cast<microseconds>(end - start).count();
+//        using std::chrono::system_clock, std::chrono::time_point, std::chrono::duration_cast, std::chrono::microseconds;
+//        time_point<system_clock> start = system_clock::now();
+//        ssize_t received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
+//                                           (struct sockaddr *) &recv_packet_address, &recv_packet_address_len);
+//        time_point<system_clock> end = system_clock::now();
+//        auto elapsed = duration_cast<microseconds>(end - start).count();
+        ssize_t received_length{};
+        auto elapsed = measure_time_microseconds([&](){
+            received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
+                                        (struct sockaddr *) &recv_packet_address, &recv_packet_address_len);
+        });
         microseconds_left -= elapsed;
 
         if (check_recv_packet(match_packet, received_length, false)) {
@@ -181,7 +185,7 @@ void ServerUDP::ppcb_receive_data() {
         send_packet_to_client(&rjt, sizeof(rjt));
     };
     for (uint64_t packet_number = 0, bytes_received = 0; bytes_received < session.data_length; packet_number++) {
-        auto type = receive_packet_from_client([&](int type, void *buf) {
+         receive_packet_from_client([&](int type, void *buf) {
             // ensure the DATA packet type
             if (type != DATA_PACKET_TYPE) return false;
             auto *data = (data_packet_t *) buf;
