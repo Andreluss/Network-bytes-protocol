@@ -3,6 +3,7 @@
 //
 
 #include <algorithm>
+#include <stdexcept>
 #include "Client.h"
 #include "common.h"
 #include "protocol.h"
@@ -23,6 +24,9 @@ void Client::run() {
     }
     catch (const ppcb_exception& e) {
         fatal("%s", e.what());
+    }
+    catch (const std::runtime_error& e) {
+        fatal("[runtime error] %s", e.what());
     }
 }
 
@@ -59,15 +63,13 @@ void Client::ppcb_send_data() {
     size_t data_left = data_to_send_size;
     uint64_t packet_number = 0;
     while (data_left > 0) {
-        size_t data_length = std::min(data_left, (size_t)DATA_PACKET_LENGTH);
+        size_t data_length = std::min(data_left, (size_t)DATA_PACKET_DATA_LENGTH);
         data_packet_t data_packet; data_packet_init(&data_packet, session_id, packet_number, data_length, data_ptr);
 
         send_packet_to_server(&data_packet, DATA_PACKET_HEADER_LENGTH + data_length);
         fprintf(stderr, "--> DATA #%zu [%zu bytes]\n", packet_number, data_length);
 
         if (c_data_ack) {
-            fprintf(stderr, "?a.. ");
-            fflush(stderr);
             ppcb_get_ack(packet_number);
         }
 
@@ -78,6 +80,8 @@ void Client::ppcb_send_data() {
 }
 
 void Client::ppcb_get_ack(uint64_t packet_number) {
+    fprintf(stderr, "[%zu] ", packet_number);
+    fflush(stderr);
     uint8_t packet_type = receive_packet_from_server([&](int type, void* buf) {
         // At this point, we are sure the packet is readable and came from the server.
         // Now the options are:

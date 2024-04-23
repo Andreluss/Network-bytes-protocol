@@ -14,6 +14,7 @@
 #include "common.h"
 #include "protocol.h"
 #include "ClientUDP.h"
+#include "ClientUDPR.h"
 
 // Returns a new socket connected to the server or -1 on error
 int tcp_establish_connection(struct sockaddr_in *server_address) {
@@ -79,9 +80,9 @@ void tcp_send_data_packets(int sock, uint64_t session_id, char* buf, size_t buf_
     size_t bytes_left = buf_size;
     uint64_t packet_number = 0;
     while (bytes_left > 0) {
-        size_t data_size = bytes_left >= DATA_PACKET_LENGTH ? DATA_PACKET_LENGTH : bytes_left;
+        size_t data_size = bytes_left >= DATA_PACKET_DATA_LENGTH ? DATA_PACKET_DATA_LENGTH : bytes_left;
 
-        assert(DATA_PACKET_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
+        assert(DATA_PACKET_DATA_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
         fprintf(stderr, "--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
                         packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
 
@@ -227,9 +228,9 @@ void udp_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t 
     size_t bytes_left = buf_size;
     uint64_t packet_number = 0;
     while (bytes_left > 0) {
-        size_t data_size = bytes_left >= DATA_PACKET_LENGTH ? DATA_PACKET_LENGTH : bytes_left;
+        size_t data_size = bytes_left >= DATA_PACKET_DATA_LENGTH ? DATA_PACKET_DATA_LENGTH : bytes_left;
 
-        assert(DATA_PACKET_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
+        assert(DATA_PACKET_DATA_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
         fprintf(stderr, "--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
                 packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
 
@@ -369,7 +370,6 @@ void udpr_send_data_packet(int sock, struct sockaddr_in* server_address, uint64_
     if (acc->session_id != session_id) {
         fatal("udpr_send_data_packet: unexpected session id: %d in ACC, expected: %d", acc->session_id, session_id);
     }
-    acc->packet_number = be64toh(acc->packet_number);
     if (acc->packet_number != packet_number) {
         fatal("udpr_send_data_packet: unexpected packet number: %d in ACC, expected: %d", acc->packet_number, packet_number);
     }
@@ -390,7 +390,6 @@ void udpr_receive_acc_packet(int sock, struct sockaddr_in* server_address, uint6
     if (acc->session_id != session_id) {
         fatal("udpr_receive_acc_packet: unexpected session id: %d in ACC, expected: %d", acc->session_id, session_id);
     }
-    acc->packet_number = be64toh(acc->packet_number);
     if (acc->packet_number != packet_number) {
         fatal("udpr_receive_acc_packet: unexpected packet number: %d in ACC, expected: %d", acc->packet_number, packet_number);
     }
@@ -404,9 +403,9 @@ void udpr_send_data_packets(int fd, struct sockaddr_in *server_address, uint64_t
     size_t bytes_left = buf_size;
     uint64_t packet_number = 0;
     while (bytes_left > 0) {
-        size_t data_size = bytes_left >= DATA_PACKET_LENGTH ? DATA_PACKET_LENGTH : bytes_left;
+        size_t data_size = bytes_left >= DATA_PACKET_DATA_LENGTH ? DATA_PACKET_DATA_LENGTH : bytes_left;
 
-        assert(DATA_PACKET_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
+        assert(DATA_PACKET_DATA_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
         fprintf(stderr, "--> DATA #%ld with data size %ld (total size: %ld)... ",
                 packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
 
@@ -514,7 +513,7 @@ int main(int argc, char *argv[])
     } else if (strcmp(protocol, "udpr") == 0) {
         udpr(&server_address, buf, buf_size);
     } else {
-        ClientUDP(buf, buf_size, server_address, port).run();
+        ClientUDPR(buf, buf_size, server_address, port).run();
     }
 
     free(buf);

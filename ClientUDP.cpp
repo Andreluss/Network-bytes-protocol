@@ -18,8 +18,6 @@ void ClientUDP::send_packet_to_server(void *packet, ssize_t packet_size) {
     if (bytes_sent != packet_size)
         throw std::runtime_error("sendto (packet " + std::to_string(*(uint8_t*)packet) + ") - partial / failed write: "
                                  " " + std::to_string(bytes_sent) + " of " + std::to_string(packet_size) + " bytes");
-    // save last sent packet in case of retransmissions
-    // ...
 }
 
 uint8_t ClientUDP::receive_packet_from_server(const std::function<bool(int, void *)> &match_packet) {
@@ -57,5 +55,5 @@ uint8_t ClientUDP::receive_packet_from_server(const std::function<bool(int, void
             fprintf(stderr, "x-- skip [packet %d] not matching requirements\n", packet_type);
         }
     }
-    throw ppcb_exception("Timeout ;_;");
+    throw ppcb_timeout_exception("Timeout ;_;");
 }

@@ -34,14 +34,14 @@ void data_packet_init(data_packet_t *packet, uint64_t session_id, uint64_t packe
 void acc_packet_init(acc_packet *packet, uint64_t session_id, uint64_t packet_number) {
     packet->type = ACC_PACKET_TYPE;
     packet->session_id = session_id;
-    packet->packet_number = packet_number;
+    packet->packet_number = htobe64(packet_number);
 }
 
 // Initialize an rjt_packet struct
 void rjt_packet_init(rjt_packet *packet, uint64_t session_id, uint64_t packet_number) {
     packet->type = RJT_PACKET_TYPE;
     packet->session_id = session_id;
-    packet->packet_number = packet_number;
+    packet->packet_number = htobe64(packet_number);
 }
 
 // Initialize an rcvd_packet struct
@@ -105,6 +105,7 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
         error("write (received data)");
         return -1;
     }
+
     fprintf(stderr, "<-- [");
     writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
     fprintf(stderr, "]%s", end.c_str());

@@ -34,6 +34,7 @@ protected:
     // The last packet sent in the current session (used for retransmissions).
     char last_packet_sent[MAX_PACKET_SIZE]{};
     ssize_t last_packet_sent_size = 0;
+    uint8_t last_packet_sent_type = -1;
 
     // The number of retransmissions for the current session (0 iff the session is not retransmitted).
     int retransmissions = 0;

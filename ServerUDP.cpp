@@ -108,12 +108,12 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                fprintf(stderr, "-r-> ret [packet %d] (attempt %d/%d)\n", packet_type,
+                fprintf(stderr, "-r> [packet %d] (attempt %d/%d)\n", last_packet_sent_type,
                         retransmissions - retransmissions_left + 1, retransmissions);
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
                 continue;
             } else {
-                throw ppcb_exception("/x.x\\ Timeout - packet didn't arrive");
+                throw ppcb_timeout_exception(";_; Timeout - packet didn't arrive");
             }
         }
     }
@@ -127,6 +127,7 @@ uint8_t ServerUDP::receive_packet_from_all(std::function<bool(int, void *)> matc
         if (check_recv_packet(match_packet, received_length, true)) {
             return *(uint8_t*)recv_buffer;
         }
+        fprintf(stderr, "<*> "); fflush(stderr);
     }
 }
 
@@ -141,6 +142,7 @@ void ServerUDP::send_packet_to_client(void *packet, ssize_t packet_size) {
 
     memcpy(last_packet_sent, packet, packet_size);
     last_packet_sent_size = packet_size;
+    last_packet_sent_type = *(uint8_t*)packet;
 }
 
 // --------------- Protocol functions ---------------
@@ -216,7 +218,7 @@ void ServerUDP::ppcb_receive_data() {
         // --------------- data is correct ---------------
 
         // [print the data] to stdout
-        print_data_packet(data, " ");
+        if (print_data_packet(data, " ") < 0) throw std::runtime_error("write (received data -> stdout)");
 
         // send the ACC confirmation to the client if the protocol is UDPR
         if (retransmissions > 0) {

@@ -16,7 +16,7 @@
 
 #define MAX_PACKET_SIZE 65535
 #define DATA_PACKET_MAX_DATA_LENGTH 64000
-#define DATA_PACKET_LENGTH 16
+#define DATA_PACKET_DATA_LENGTH 16
 
 #define CONN_PACKET_TYPE 1
 #define CONACC_PACKET_TYPE 2
@@ -96,10 +96,16 @@ class ppcb_exception : public std::exception {
 private:
     std::string message;
 public:
-    explicit ppcb_exception(std::string  msg) : message(std::move(msg)) {}
+    explicit ppcb_exception(std::string msg) noexcept : message(std::move(msg)) {}
+    ppcb_exception(const ppcb_exception& other) noexcept = default;
     [[nodiscard]] const char* what () const noexcept override {
         return message.c_str();
     }
+};
+
+class ppcb_timeout_exception : public ppcb_exception {
+public:
+    explicit ppcb_timeout_exception(std::string msg) noexcept : ppcb_exception(std::move(msg)) {}
 };
 
 uint8_t validate_packet(void* buf, size_t buf_size);
