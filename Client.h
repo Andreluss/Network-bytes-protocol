@@ -11,7 +11,7 @@
 
 class Client {
 public:
-    void run();
+    virtual void run();
     explicit Client(uint8_t protocol_id, const char *data, size_t data_size, sockaddr_in server_address, int port,
                     bool data_ack = false) :
             data_to_send(data), data_to_send_size(data_size),
