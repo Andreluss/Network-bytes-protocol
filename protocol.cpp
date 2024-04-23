@@ -105,6 +105,8 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
         error("write (received data)");
         return -1;
     }
+    // flush stdout to make sure the data is printed
+    fflush(stdout);
 
     fprintf(stderr, "<-- [");
     writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
