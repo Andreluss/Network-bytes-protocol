@@ -257,7 +257,7 @@ void udp_receive_rcvd_packet(int sock, struct sockaddr_in* server_address, uint6
     fprintf(stderr, "<-- RCVD \n");
 }
 
-int udp_setup_connection(struct sockaddr_in *server_address) {
+int udp_setup_connection() {
     // create a socket
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
@@ -276,7 +276,7 @@ int udp_setup_connection(struct sockaddr_in *server_address) {
 
 void udp(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
     // Set up the UDP connection.
-    int sock = udp_setup_connection(server_address);
+    int sock = udp_setup_connection();
 
     // -------------- start the protocol --------------
     uint64_t session_id = udp_start_protocol(sock, server_address, buf_size);
@@ -294,7 +294,7 @@ void udp(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
 
 // Retransmission UDP recvfrom wrapper, takes last sent packet as an argument (to retransmit it if needed)
 // and returns the packet type if the buffer has the correct data.
-int updr_packet_recvfrom(int fd, struct sockaddr_in *server_address, void* last_sent_packet, size_t last_sent_packet_size) {
+int updr_packet_recvfrom(int fd, struct sockaddr_in *server_address, void* last_sent_packet, ssize_t last_sent_packet_size) {
     for (int retransmission_count = 0; retransmission_count < MAX_RETRANSMITS; retransmission_count++) {
         socklen_t address_length = (socklen_t) sizeof(*server_address);
         ssize_t bytes_read = recvfrom(fd, udp_recv_buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *) server_address,
@@ -315,8 +315,8 @@ int updr_packet_recvfrom(int fd, struct sockaddr_in *server_address, void* last_
     fatal("updr_packet_recvfrom: maximum retransmissions reached");
 }
 
-int udpr_setup_connection(struct sockaddr_in *server_address) {
-    return udp_setup_connection(server_address);
+int udpr_setup_connection() {
+    return udp_setup_connection();
 }
 
 uint64_t updr_start_protocol(int fd, struct sockaddr_in* server_address, size_t buf_size) {
@@ -428,13 +428,17 @@ void udpr_receive_rcvd_packet(int sock, struct sockaddr_in* server_address, uint
     if (type != RCVD_PACKET_TYPE) {
         fatal("unexpected packet type: %d, expected: %d", type, RCVD_PACKET_TYPE);
     }
+    rcvd_packet *rcvd = (rcvd_packet *) udp_recv_buffer;
+    if (rcvd->session_id != session_id) {
+        fatal("unexpected rcvd session id: %d, expected: %d", rcvd->session_id, session_id);
+    }
 
     fprintf(stderr, "<-- RCVD \n");
 }
 
 void udpr(struct sockaddr_in *server_address, char *buf, size_t buf_size) {
     // Set up the UDP connection.
-    int sock = udpr_setup_connection(server_address);
+    int sock = udpr_setup_connection();
 
     // -------------- start the protocol --------------
     uint64_t session_id = updr_start_protocol(sock, server_address, buf_size);

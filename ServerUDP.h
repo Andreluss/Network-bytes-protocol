@@ -30,10 +30,10 @@ protected:
     socklen_t recv_packet_address_len = sizeof(recv_packet_address);
 
     // This function sends the packet to the client and sets the last_packet_sent and last_packet_sent_size.
-    void send_packet_to_client(void* packet, size_t packet_size) override;
+    void send_packet_to_client(void* packet, ssize_t packet_size) override;
     // The last packet sent in the current session (used for retransmissions).
     char last_packet_sent[MAX_PACKET_SIZE]{};
-    size_t last_packet_sent_size = 0;
+    ssize_t last_packet_sent_size = 0;
 
     // The number of retransmissions for the current session (0 iff the session is not retransmitted).
     int retransmissions = 0;

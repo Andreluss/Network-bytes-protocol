@@ -15,8 +15,8 @@ public:
     explicit Client(uint8_t protocol_id, const char *data, size_t data_size, sockaddr_in server_address, int port,
                     bool data_ack = false) :
             data_to_send(data), data_to_send_size(data_size),
-            c_protocol_id(protocol_id), server_address(server_address),
-            port(port), c_data_ack(data_ack) {}
+            c_data_ack(data_ack), c_protocol_id(protocol_id),
+            server_address(server_address), port(port) {}
 protected:
     const char* data_to_send;
     const size_t data_to_send_size;
@@ -33,7 +33,7 @@ protected:
     void ppcb_send_data();
     void ppcb_end_connection();
 
-    virtual void send_packet_to_server(void* packet, size_t packet_size) = 0;
+    virtual void send_packet_to_server(void* packet, ssize_t packet_size) = 0;
     // The function receives a packet from the server and checks if it matches the match_packet function.
     // Note: the function should store the received packet in received_packet buffer.
     virtual uint8_t receive_packet_from_server(const std::function<bool(int, void *)> &match_packet) = 0;

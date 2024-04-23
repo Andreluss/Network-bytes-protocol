@@ -13,7 +13,7 @@ public:
             Client(UDP_PROTOCOL_ID, data, data_size, server_address, port, data_ack) {}
 protected:
     int create_connection_socket() override;
-    void send_packet_to_server(void* packet, size_t packet_size) override;
+    void send_packet_to_server(void* packet, ssize_t packet_size) override;
     uint8_t receive_packet_from_server(const std::function<bool(int, void *)> &match_packet) override;
 };
 

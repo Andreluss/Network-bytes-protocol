@@ -12,7 +12,7 @@ int ClientUDP::create_connection_socket() {
     return sock;
 }
 
-void ClientUDP::send_packet_to_server(void *packet, size_t packet_size) {
+void ClientUDP::send_packet_to_server(void *packet, ssize_t packet_size) {
     assert(packet_size > 0);
     auto bytes_sent = sendto(sock, packet, packet_size, 0, (struct sockaddr *) &server_address, sizeof(server_address));
     if (bytes_sent != packet_size)

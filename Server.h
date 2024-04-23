@@ -33,7 +33,7 @@ protected:
     int connection_fd = -1;
     virtual uint8_t receive_packet_from_all(std::function<bool(int type, void *buf)> match_packet) = 0;
     virtual uint8_t receive_packet_from_client(const std::function<bool(int, void *)> &match_packet) = 0;
-    virtual void send_packet_to_client(void* packet, size_t packet_size) = 0;
+    virtual void send_packet_to_client(void* packet, ssize_t packet_size) = 0;
 
     void _setup_socket_with(int socket_type);
 };

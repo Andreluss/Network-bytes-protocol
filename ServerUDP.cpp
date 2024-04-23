@@ -8,11 +8,9 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <stdexcept>
-#include <cassert>
 #include "ServerUDP.h"
 #include "protconst.h"
 #include "protocol.h"
-#include <chrono>
 #include <cinttypes>
 
 void ServerUDP::setup_socket() {
@@ -132,9 +130,9 @@ uint8_t ServerUDP::receive_packet_from_all(std::function<bool(int, void *)> matc
     }
 }
 
-void ServerUDP::send_packet_to_client(void *packet, size_t packet_size) {
+void ServerUDP::send_packet_to_client(void *packet, ssize_t packet_size) {
     if (packet_size == 0) return;
-    auto bytes_sent = sendto(session.session_fd, packet, packet_size, 0,
+    ssize_t bytes_sent = sendto(session.session_fd, packet, packet_size, 0,
                              (struct sockaddr *) &recv_packet_address, recv_packet_address_len);
     if (bytes_sent != packet_size) {
         throw ppcb_exception("sendto: sent " + std::to_string(bytes_sent) + " bytes,"
@@ -150,7 +148,7 @@ void ServerUDP::send_packet_to_client(void *packet, size_t packet_size) {
 void ServerUDP::ppcb_establish_connection() {
     // Wait for a connection packet.
     fprintf(stderr, "<*> ");
-    receive_packet_from_all([](int type, void *buf) {
+    receive_packet_from_all([](int type, void */*buf*/) {
         return type == CONN_PACKET_TYPE;
     }); fprintf(stderr, "CONN ");
     auto* conn = (conn_packet*) recv_buffer;
