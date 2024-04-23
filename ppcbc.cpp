@@ -1,33 +1,15 @@
-#include <fcntl.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <stdint.h>
+#include <cstdint>
 #include <arpa/inet.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <libgen.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdint.h>
-#include <arpa/inet.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <pthread.h>
-#include <sys/wait.h>
 #include <endian.h>
-#include <assert.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
+#include <memory>
 
 #include "common.h"
 #include "protocol.h"
@@ -41,20 +23,20 @@ int tcp_establish_connection(struct sockaddr_in *server_address) {
     if (sock < 0)
         syserr("socket");
 
+    fprintf(stderr, "Trying to connect to the server... \n");
+    // connect to the server via TCP
+    if (connect(sock, (struct sockaddr *) server_address, sizeof(*server_address)) == -1)
+        syserr("connect");
+
     // configure the socket timeouts
     struct timeval tv = {
-        .tv_sec = MAX_WAIT,
-        .tv_usec = 0
+            .tv_sec = MAX_WAIT,
+            .tv_usec = 0
     };
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
         syserr("setsockopt");
     // if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv)) < 0)
     //     syserr("setsockopt");
-
-    fprintf(stderr, "Trying to connect to the server... \n");
-    // connect to the server via TCP
-    if (connect(sock, (struct sockaddr *) server_address, sizeof(*server_address)) == -1)
-        syserr("connect");
 
     return sock;
 }
@@ -506,8 +488,8 @@ int main(int argc, char *argv[])
 
     // read the protocol, host and port
     const char *protocol = argv[1];
-    if (strcmp(protocol, "tcp") != 0 && strcmp(protocol, "udp") != 0 && strcmp(protocol, "udpr") != 0)
-        fatal("unknown protocol: %s", protocol);
+//    if (strcmp(protocol, "tcp") != 0 && strcmp(protocol, "udp") != 0 && strcmp(protocol, "udpr") != 0)
+//        fatal("unknown protocol: %s", protocol);
     const char *host = argv[2];
     uint16_t port = read_port(argv[3]);
     struct sockaddr_in server_address = get_server_address(host, port);
@@ -528,6 +510,8 @@ int main(int argc, char *argv[])
         udp(&server_address, buf, buf_size);
     } else if (strcmp(protocol, "udpr") == 0) {
         udpr(&server_address, buf, buf_size);
+    } else {
+
     }
 
     free(buf);
