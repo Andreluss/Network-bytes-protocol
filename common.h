@@ -18,4 +18,9 @@ void set_socket_recv_timeout(int socket_fd, int timeout_seconds, int timeout_mic
 [[noreturn]] void fatal(const char* fmt, ...);
 void error(const char* fmt, ...);
 
+int64_t measure_time_microseconds(const std::function<void()> &fun);
+
+// write a function (don't overload == operator) to compare two sockaddr_in structs
+bool sockaddr_in_equal(const struct sockaddr_in &a, const struct sockaddr_in &b);
+
 #endif

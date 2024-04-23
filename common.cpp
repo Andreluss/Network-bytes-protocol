@@ -1,20 +1,18 @@
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <limits.h>
 #include <netdb.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cerrno>
+#include <cinttypes>
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <csignal>
+#include <cstdarg>
+#include <chrono>
+#include <functional>
 #include "common.h"
 
 uint16_t read_port(char const *string) {
@@ -164,3 +162,16 @@ void error(const char* fmt, ...) {
     fprintf(stderr, "\n");
 }
 
+int64_t measure_time_microseconds(const std::function<void()> &fun) {
+    using std::chrono::system_clock, std::chrono::time_point, std::chrono::duration_cast, std::chrono::microseconds;
+    time_point<system_clock> start = system_clock::now();
+    fun();
+    time_point<system_clock> end = system_clock::now();
+    return duration_cast<microseconds>(end - start).count();
+}
+
+bool sockaddr_in_equal(const struct sockaddr_in &a, const struct sockaddr_in &b) {
+    return a.sin_family == b.sin_family &&
+           a.sin_port == b.sin_port &&
+           a.sin_addr.s_addr == b.sin_addr.s_addr;
+}
