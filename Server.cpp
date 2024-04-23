@@ -1,5 +1,4 @@
 #include "Server.h"
-#include "protconst.h"
 #include <stdexcept>
 #include <csignal>
 #include <cstdio>
