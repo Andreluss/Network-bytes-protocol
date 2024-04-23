@@ -43,17 +43,6 @@ int validate_conn_packet(conn_packet *conn, int is_tcp) {
     return 0;
 }
 
-int udp_read_conn(int fd, conn_packet *conn, struct sockaddr_in* client_address, socklen_t* address_length) {
-    *address_length = (socklen_t) sizeof(*client_address);
-    ssize_t received_length = recvfrom(fd, conn, sizeof(*conn), 0,
-                               (struct sockaddr *) client_address, address_length);
-    if (received_length != sizeof(*conn)) {
-        error("invalid packet length: %zd, expected: %zu", received_length, sizeof(*conn));
-        return -1;
-    }
-    return validate_conn_packet(conn, 0);
-}
-
 int tcp_read_conn(int fd, conn_packet *conn) {
     if (readn(fd, conn, sizeof(*conn)) != sizeof(*conn)) {
         error("readn: conn");
@@ -206,7 +195,6 @@ int tcp_handle_new_client(int listening_socket_fd) {
     if (tcp_write_rcvd(fd, session_id) < 0) {
         return -1;
     }
-
     // Close the connection.
     fprintf(stderr, "<x> \n");
     if (close(fd) < 0) {
@@ -215,9 +203,6 @@ int tcp_handle_new_client(int listening_socket_fd) {
 
     return 0;
 }
-
-/* ----- This is the server file (ppcbs.c) ---------- */
-
 
 void sigint_handler(int signum) {
     fprintf(stderr, " SIGINT received(%d). Closing the connection... \n", signum);
@@ -230,6 +215,9 @@ void sigint_handler(int signum) {
     if (socket_fd < 0) {
         syserr("cannot create a socket");
     }
+
+    // VERY IMPORTANT - this prevents the write() from crashing the server on broken PIPE error:
+    signal(SIGPIPE, SIG_IGN);
 
     // ------------------ warning ---------------------------
     // Enable address reuse.

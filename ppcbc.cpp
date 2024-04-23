@@ -20,11 +20,12 @@ int tcp_establish_connection(struct sockaddr_in *server_address) {
     if (sock < 0)
         syserr("socket");
 
-    fprintf(stderr, "Trying to connect to the server... \n");
+    fprintf(stderr, "Trying to connect to the server... ");
+    fflush(stderr);
     // connect to the server via TCP
     if (connect(sock, (struct sockaddr *) server_address, sizeof(*server_address)) == -1)
         syserr("connect");
-
+    fprintf(stderr, "CONNECTED!\n");
     // configure the socket timeouts
     struct timeval tv = {
             .tv_sec = MAX_WAIT,
