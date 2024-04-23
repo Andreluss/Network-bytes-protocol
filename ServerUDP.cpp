@@ -199,8 +199,6 @@ void ServerUDP::ppcb_receive_data() {
             return data->packet_number >= packet_number;
         });
         auto* data = (data_packet_t*) recv_buffer;
-        fprintf(stderr, "<-- DATA #%" PRIu64, data->packet_number);
-        fprintf(stderr, ", %2" PRIu32 "B ", data->data_length);
 
         // check if the packet number is correct
         if (packet_number != data->packet_number) {
@@ -226,6 +224,7 @@ void ServerUDP::ppcb_receive_data() {
             acc_packet acc; acc_packet_init(&acc, session.session_id, packet_number);
             send_packet_to_client(&acc, sizeof(acc));
         }
+//        fprintf(stderr, (bytes_received < session.data_length) ? "\r" : "\n");
         fprintf(stderr, "\n");
     }
 }

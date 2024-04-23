@@ -1,4 +1,5 @@
 #include "protocol.h"
+#include <cinttypes>
 
 
 void conn_packet_init(conn_packet *packet, uint64_t session_id, uint8_t protocol_id, uint64_t data_length) {
@@ -65,7 +66,7 @@ uint8_t validate_packet(void* buf, size_t buf_size) {
             throw ppcb_exception("invalid protocol id");
 
         conn->data_length = be64toh(conn->data_length);
-        if (conn->data_length < 1 || conn->data_length > DATA_PACKET_MAX_DATA_LENGTH)
+        if (conn->data_length < 1)
             throw ppcb_exception("invalid data length");
     }
     else if (packet_type == CONACC_PACKET_TYPE) {
@@ -99,7 +100,6 @@ uint8_t validate_packet(void* buf, size_t buf_size) {
 
     return packet_type;
 }
-
 int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     if (writen(STDOUT_FILENO, data_packet->data, data_packet->data_length) != data_packet->data_length) {
         error("write (received data)");
@@ -108,9 +108,11 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     // flush stdout to make sure the data is printed
     fflush(stdout);
 
-    fprintf(stderr, "<-- [%3zu] [", data_packet->packet_number);
+    fprintf(stderr, "<-- %" PRIu64 ", ", data_packet->packet_number);
+    fprintf(stderr, "%2" PRIu32 "B [", data_packet->data_length);
     writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
     fprintf(stderr, "]%s", end.c_str());
+    fflush(stderr);
 
     return 0;
 }

@@ -132,7 +132,17 @@ void Client::ppcb_end_connection() {
             if (rcvd->session_id != session_id) {
                 throw ppcb_exception("<- rcvd: invalid session id: " + std::to_string(rcvd->session_id) + ", expected: " + std::to_string(session_id));
             }
-            fprintf(stderr, "<-- RCVD \n");
+            // print in green
+            fprintf(stderr, "\033[1;32m<-- RCVD\033[0m\n");
+            return true;
+        }
+        else if (type == RJT_PACKET_TYPE) {
+            auto* rjt = (rjt_packet*) buf;
+            if (rjt->session_id != session_id) {
+                throw ppcb_exception("rjt: invalid session id: " + std::to_string(rjt->session_id) + ", expected: " + std::to_string(session_id));
+            }
+            // print in red
+            fprintf(stderr, "\033[1;31m<-- CONRJT\033[0m\n");
             return true;
         }
         else {
