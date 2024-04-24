@@ -52,7 +52,7 @@ void Client::ppcb_establish_connection() {
             return true;
         }
         else {
-            throw ppcb_exception("invalid packet type: " + std::to_string(type) + ", expected CONACC or CONRJT");
+            throw ppcb_exception("invalid packet: " + packet_short_info(type, buf, false) + ", expected CONACC or CONRJT");
         }
     });
     fprintf(stderr, "<-- %s\n", packet_type == CONACC_PACKET_TYPE ? "CONACC" : "CONRJT");
@@ -115,7 +115,7 @@ void Client::ppcb_get_ack(uint64_t packet_number) {
         }
         else if (type == CONACC_PACKET_TYPE) return false; // if the old retransmissions came just now
         else {
-            throw ppcb_exception("invalid packet type: " + std::to_string(type) + ", expected ACC or RJT");
+            throw ppcb_exception("invalid packet type: " + packet_short_info(type, buf, false) + ", expected ACC or RJT");
         }
     });
 
