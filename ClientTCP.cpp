@@ -49,7 +49,7 @@ uint8_t ClientTCP::receive_packet_from_server(const std::function<bool(int, void
             return packet_type;
         }
         else {
-            fprintf(stderr, "x-- skip [packet %d] not matching requirements\n", packet_type);
+            fprintf(stderr, "x-- skip %s filtered out\n", packet_short_info(packet_type, received_packet, false).c_str());
         }
     }
     throw ppcb_timeout_exception("Timeout ;_;");

@@ -192,11 +192,11 @@ std::string packet_short_info(uint8_t type, void *packet, bool convert_to_ho) {
     } else if (type == ACC_PACKET_TYPE) {
         auto* acc = (acc_packet*)packet;
         uint64_t packet_number = convert_to_ho ? be64toh(acc->packet_number) : acc->packet_number;
-        info = "[ACC " + std::to_string(packet_number) + "]";
+        info = "[ACC #" + std::to_string(packet_number) + "]";
     } else if (type == RJT_PACKET_TYPE) {
         auto* rjt = (rjt_packet*)packet;
         uint64_t packet_number = convert_to_ho ? be64toh(rjt->packet_number) : rjt->packet_number;
-        info = "[RJT " + std::to_string(packet_number) + "]";
+        info = "[RJT #" + std::to_string(packet_number) + "]";
     } else if (type == RCVD_PACKET_TYPE) {
         info = "[RCVD]";
     } else {
