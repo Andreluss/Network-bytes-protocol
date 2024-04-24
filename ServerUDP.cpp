@@ -108,7 +108,7 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                fprintf(stderr, "-r> [packet %d] (attempt %d/%d)\n", last_packet_sent_type,
+                fprintf(stderr, "-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent).c_str(),
                         retransmissions - retransmissions_left + 1, retransmissions);
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
                 continue;

@@ -23,7 +23,7 @@ uint8_t ClientUDPR::receive_packet_from_server(const std::function<bool(int, voi
             if (retransmissions_left <= 0) { // no more retransmissions...
                 throw e; // ...so the real timeout has happened
             }
-            fprintf(stderr, "-r-> ret [packet %d] (attempt %d/%d)\n", sent_packet_type,
+            fprintf(stderr, "-r> %s (attempt %d/%d)\n", packet_short_info(sent_packet_type, sent_packet).c_str(),
                     retransmissions - retransmissions_left + 1, retransmissions);
             fflush(stderr);
             send_packet_to_server(sent_packet, sent_packet_size);
