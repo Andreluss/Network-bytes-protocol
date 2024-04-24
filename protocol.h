@@ -1,12 +1,12 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <endian.h>
 #include <exception>
 #include <string>
 #include <cstring>
-#include <stdio.h>
+#include <cstdio>
 #include <cstdlib>
 #include <cassert>
 #include <utility>
@@ -16,7 +16,7 @@
 
 #define MAX_PACKET_SIZE 65535
 #define DATA_PACKET_MAX_DATA_LENGTH 64000
-#define DATA_PACKET_DATA_LENGTH 1024
+#define DATA_PACKET_DATA_LENGTH 32000
 
 #define CONN_PACKET_TYPE 1
 #define CONACC_PACKET_TYPE 2
