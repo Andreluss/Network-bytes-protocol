@@ -114,4 +114,6 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end = "\n")
 
 ssize_t read_packet_from_stream(int sock, void* buffer);
 
+std::string packet_short_info(uint8_t type, void* packet);
+
 #endif

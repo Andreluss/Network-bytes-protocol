@@ -59,7 +59,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
             return true;
         }
         else {
-            throw ppcb_exception("[packet " + std::to_string(packet_type) + "] not matching requirements");
+            throw ppcb_exception(packet_short_info(packet_type, recv_buffer));
         }
     }
     catch (ppcb_exception &e) {

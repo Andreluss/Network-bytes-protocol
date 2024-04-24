@@ -168,3 +168,34 @@ ssize_t read_packet_from_stream(int sock, void* buffer) {
         return -1;
     }
 }
+
+std::string packet_short_info(uint8_t type, void* packet) {
+    // return a string with a very short info about the packet,
+    // for example for a data packet -> [DATA <packet_number> <data_length>]
+    // for a CONN packet -> [CONN <protocol_id> <data_length>]
+    // etc.
+    // also assume the packet is validated, so no need to convert by order
+    std::string info;
+    if (type == CONN_PACKET_TYPE) {
+        auto* conn = (conn_packet*)packet;
+        info = "[CONN " + std::to_string(conn->protocol_id) + " " + std::to_string(conn->data_length) + "]";
+    } else if (type == CONACC_PACKET_TYPE) {
+        info = "[CONACC]";
+    } else if (type == CONRJT_PACKET_TYPE) {
+        info = "[CONRJT]";
+    } else if (type == DATA_PACKET_TYPE) {
+        auto* data = (data_packet_t*)packet;
+        info = "[D #" + std::to_string(data->packet_number) + " " + std::to_string(data->data_length) + "B]";
+    } else if (type == ACC_PACKET_TYPE) {
+        auto* acc = (acc_packet*)packet;
+        info = "[ACC " + std::to_string(acc->packet_number) + "]";
+    } else if (type == RJT_PACKET_TYPE) {
+        auto* rjt = (rjt_packet*)packet;
+        info = "[RJT " + std::to_string(rjt->packet_number) + "]";
+    } else if (type == RCVD_PACKET_TYPE) {
+        info = "[RCVD]";
+    } else {
+        info = "[UNKNOWN]";
+    }
+    return info;
+}
