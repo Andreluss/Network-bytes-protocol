@@ -3,7 +3,8 @@
 
 # Check if the user provided a network configuration
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 \"<network configuration>\""
+    sudo tc qdisc del dev eth1 root
+    echo "Cleared network config."
     exit 1
 fi
 
