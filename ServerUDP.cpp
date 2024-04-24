@@ -59,7 +59,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
             return true;
         }
         else {
-            throw ppcb_exception(packet_short_info(packet_type, recv_buffer));
+            throw ppcb_exception(packet_short_info(packet_type, recv_buffer, false));
         }
     }
     catch (ppcb_exception &e) {
@@ -108,7 +108,8 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                fprintf(stderr, "-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent).c_str(),
+                fprintf(stderr, "-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent,
+                                                                          true).c_str(),
                         retransmissions - retransmissions_left + 1, retransmissions);
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
                 continue;

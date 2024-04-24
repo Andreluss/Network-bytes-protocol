@@ -169,7 +169,7 @@ ssize_t read_packet_from_stream(int sock, void* buffer) {
     }
 }
 
-std::string packet_short_info(uint8_t type, void* packet) {
+std::string packet_short_info(uint8_t type, void *packet, bool convert_to_ho) {
     // return a string with a very short info about the packet,
     // for example for a data packet -> [DATA <packet_number> <data_length>]
     // for a CONN packet -> [CONN <protocol_id> <data_length>]
@@ -178,20 +178,25 @@ std::string packet_short_info(uint8_t type, void* packet) {
     std::string info;
     if (type == CONN_PACKET_TYPE) {
         auto* conn = (conn_packet*)packet;
-        info = "[CONN " + std::to_string(conn->protocol_id) + " " + std::to_string(conn->data_length) + "]";
+        uint64_t data_length = convert_to_ho ? be64toh(conn->data_length) : conn->data_length;
+        info = "[CONN " + std::to_string(conn->protocol_id) + " " + std::to_string(data_length) + "]";
     } else if (type == CONACC_PACKET_TYPE) {
         info = "[CONACC]";
     } else if (type == CONRJT_PACKET_TYPE) {
         info = "[CONRJT]";
     } else if (type == DATA_PACKET_TYPE) {
         auto* data = (data_packet_t*)packet;
-        info = "[D #" + std::to_string(data->packet_number) + " " + std::to_string(data->data_length) + "B]";
+        uint64_t packet_number = convert_to_ho ? be64toh(data->packet_number) : data->packet_number;
+        uint32_t data_length = convert_to_ho ? be32toh(data->data_length) : data->data_length;
+        info = "[D #" + std::to_string(packet_number) + " " + std::to_string(data_length) + "B]";
     } else if (type == ACC_PACKET_TYPE) {
         auto* acc = (acc_packet*)packet;
-        info = "[ACC " + std::to_string(acc->packet_number) + "]";
+        uint64_t packet_number = convert_to_ho ? be64toh(acc->packet_number) : acc->packet_number;
+        info = "[ACC " + std::to_string(packet_number) + "]";
     } else if (type == RJT_PACKET_TYPE) {
         auto* rjt = (rjt_packet*)packet;
-        info = "[RJT " + std::to_string(rjt->packet_number) + "]";
+        uint64_t packet_number = convert_to_ho ? be64toh(rjt->packet_number) : rjt->packet_number;
+        info = "[RJT " + std::to_string(packet_number) + "]";
     } else if (type == RCVD_PACKET_TYPE) {
         info = "[RCVD]";
     } else {
