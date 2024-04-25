@@ -1,7 +1,3 @@
-//
-// Created by User on 4/21/2024.
-//
-
 #ifndef NETWORK_BYTES_PROTOCOL_SERVER_H
 #define NETWORK_BYTES_PROTOCOL_SERVER_H
 

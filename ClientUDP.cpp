@@ -1,7 +1,3 @@
-//
-// Created by User on 4/23/2024.
-//
-
 #include "ClientUDP.h"
 #include <arpa/inet.h>
 #include <stdexcept>

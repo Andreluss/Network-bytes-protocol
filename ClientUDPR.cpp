@@ -1,7 +1,3 @@
-//
-// Created by User on 4/23/2024.
-//
-
 #include "ClientUDPR.h"
 
 void ClientUDPR::send_packet_to_server(void *packet, ssize_t packet_size) {

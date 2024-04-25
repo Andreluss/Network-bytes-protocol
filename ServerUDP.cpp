@@ -1,7 +1,3 @@
-//
-// Created by User on 4/21/2024.
-//
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <string>

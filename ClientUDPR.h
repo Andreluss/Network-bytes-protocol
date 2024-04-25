@@ -1,7 +1,3 @@
-//
-// Created by User on 4/23/2024.
-//
-
 #ifndef NETWORK_BYTES_PROTOCOL_CLIENTUDPR_H
 #define NETWORK_BYTES_PROTOCOL_CLIENTUDPR_H
 
