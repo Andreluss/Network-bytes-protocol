@@ -183,16 +183,19 @@ int tcp_handle_new_client(int listening_socket_fd) {
     // -------------- start the protocol --------------
     uint64_t session_id; uint64_t data_length;
     if (tcp_start_protocol(fd, &session_id, &data_length) < 0) {
+        close(fd);
         return -1;
     }
 
     // -------------- read the data --------------
     if (tcp_read_data_packets(fd, session_id, data_length) < 0) {
+        close(fd);
         return -1;
     }
 
     // -------------- end the protocol --------------
     if (tcp_write_rcvd(fd, session_id) < 0) {
+        close(fd);
         return -1;
     }
     // Close the connection.
