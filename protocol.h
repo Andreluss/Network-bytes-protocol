@@ -108,6 +108,12 @@ public:
     explicit ppcb_timeout_exception(std::string msg) noexcept : ppcb_exception(std::move(msg)) {}
 };
 
+// exception for signaling that the packed was received and skipped
+class ppcb_skipped_packed_exception : public ppcb_exception {
+public:
+    explicit ppcb_skipped_packed_exception(std::string msg) noexcept : ppcb_exception(std::move(msg)) {}
+};
+
 uint8_t validate_packet(void* buf, size_t buf_size);
 
 int print_data_packet(data_packet_t *data_packet, const std::string &end = "\n");

@@ -82,6 +82,9 @@ uint8_t validate_packet(void* buf, size_t buf_size) {
         data->data_length = be32toh(data->data_length);
         if (data->data_length < 1 || data->data_length > DATA_PACKET_MAX_DATA_LENGTH)
             throw ppcb_exception("invalid data length");
+        size_t actual_data_length = buf_size - DATA_PACKET_HEADER_LENGTH;
+        if (data->data_length != actual_data_length)
+            throw ppcb_exception("data length different that declared");
     }
     else if (packet_type == ACC_PACKET_TYPE) {
         if (buf_size != sizeof(acc_packet)) throw ppcb_exception("invalid ACC packet size");

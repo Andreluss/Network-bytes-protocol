@@ -26,8 +26,19 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
     }
 
     try {
-        // 2. check if the packet is not corrupted and process it
-        auto packet_type = validate_packet(recv_buffer, received_length);
+        uint8_t packet_type;
+        try {
+            // 2. check if the packet is not corrupted and process it (if it is, function throws ppcb_exception)
+            packet_type = validate_packet(recv_buffer, received_length);
+        }
+        catch (ppcb_exception &e) {
+            if (!accept_all_senders && sockaddr_in_equal(recv_packet_address, session.client_address)) {
+                // if the sender is the client, then we need to end the session
+                throw e;
+            }
+            // if we don't care about the particular sender, we can ignore the corrupted packet
+            throw ppcb_skipped_packed_exception(e.what());
+        }
 
         // 3. check the sender of the packet
         if (!accept_all_senders) {
@@ -39,11 +50,11 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
                     // if the other client sends CONN, then answer with CONRJT
                     conrjt_packet conrjt; conrjt_packet_init(&conrjt, conn->session_id);
                     send_packet_to_client(&conrjt, sizeof(conrjt));
-                    throw ppcb_exception("--> CONRJT to " + std::string(inet_ntoa(recv_packet_address.sin_addr)) +
+                    throw ppcb_skipped_packed_exception("--> CONRJT to " + std::string(inet_ntoa(recv_packet_address.sin_addr)) +
                                          ":" + std::to_string(recv_packet_address.sin_port));
                 }
                 else {
-                    throw ppcb_exception("[packet " + std::to_string(packet_type) + "] from unknown sender: "
+                    throw ppcb_skipped_packed_exception("[packet " + std::to_string(packet_type) + "] from unknown sender: "
                                     + std::string(inet_ntoa(recv_packet_address.sin_addr))
                                     + ":" + std::to_string(recv_packet_address.sin_port));
                 }
@@ -55,10 +66,10 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
             return true;
         }
         else {
-            throw ppcb_exception(packet_short_info(packet_type, recv_buffer, false));
+            throw ppcb_skipped_packed_exception(packet_short_info(packet_type, recv_buffer, false));
         }
     }
-    catch (ppcb_exception &e) {
+    catch (ppcb_skipped_packed_exception &e) {
         fprintf(stderr, "x-- skip %s \n", e.what());
     }
     return false;
@@ -69,13 +80,6 @@ bool ServerUDP::try_receive_packet(const std::function<bool(int, void *)> &match
     while (microseconds_left > 0) {
         set_socket_recv_timeout(session.session_fd, static_cast<int>(microseconds_left / 1000000),
                                                      static_cast<int>(microseconds_left % 1000000));
-
-//        using std::chrono::system_clock, std::chrono::time_point, std::chrono::duration_cast, std::chrono::microseconds;
-//        time_point<system_clock> start = system_clock::now();
-//        ssize_t received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
-//                                           (struct sockaddr *) &recv_packet_address, &recv_packet_address_len);
-//        time_point<system_clock> end = system_clock::now();
-//        auto elapsed = duration_cast<microseconds>(end - start).count();
         ssize_t received_length{};
         microseconds_left -= measure_time_microseconds([&](){
             received_length = recvfrom(session.session_fd, recv_buffer, MAX_PACKET_SIZE, 0,
@@ -178,35 +182,42 @@ void ServerUDP::ppcb_establish_connection() {
 }
 
 void ServerUDP::ppcb_receive_data() {
-    auto send_rjt = [&](data_packet_t* data) {
+    auto send_rjt = [&](uint64_t packet_number) {
         fprintf(stderr, "--> RJT\n");
-        rjt_packet rjt; rjt_packet_init(&rjt, data->session_id, data->packet_number);
+        rjt_packet rjt; rjt_packet_init(&rjt, session.session_id, packet_number);
         send_packet_to_client(&rjt, sizeof(rjt));
     };
     for (uint64_t packet_number = 0, bytes_received = 0; bytes_received < session.data_length; packet_number++) {
-         receive_packet_from_client([&](int type, void *buf) {
-            // ensure the DATA packet type
-            if (type != DATA_PACKET_TYPE) return false;
-            auto *data = (data_packet_t *) buf;
+        try {
+            receive_packet_from_client([&](int type, void *buf) {
+                // ensure the DATA packet type
+                if (type != DATA_PACKET_TYPE) return false;
+                auto *data = (data_packet_t *) buf;
 
-            // ensure the correct session
-            if (session.session_id != data->session_id) return false;
+                // ensure the correct session
+                if (session.session_id != data->session_id) return false;
 
-            // ensure the non-obsoleted packet number
-            return data->packet_number >= packet_number;
-        });
+                // ensure the non-obsoleted packet number
+                return data->packet_number >= packet_number;
+            });
+        }
+        catch (ppcb_exception &e) {
+            auto* data = (data_packet_t*) recv_buffer;
+            send_rjt(data->packet_number); // send RJT if the client sends an invalid packet
+            throw;
+        }
         auto* data = (data_packet_t*) recv_buffer;
 
         // check if the packet number is correct
         if (packet_number != data->packet_number) {
-            send_rjt(data);
+            send_rjt(data->packet_number);
             throw ppcb_exception("invalid packet number: " + std::to_string(data->packet_number) +
                                  ", expected: " + std::to_string(packet_number));
         }
         // check an edge-case: the last packet may have too much data
         bytes_received += data->data_length;
         if (bytes_received > session.data_length) {
-            send_rjt(data);
+            send_rjt(data->packet_number);
             throw ppcb_exception("too much data received: " + std::to_string(bytes_received) +
                                  ", expected: " + std::to_string(session.data_length));
         }

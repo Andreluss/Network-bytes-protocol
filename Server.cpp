@@ -29,6 +29,9 @@ void Server::run() {
         catch (const std::runtime_error& e) {
             error("runtime-error -> %s", e.what());
         }
+        catch (...) {
+            error("unknown error ->- disconnected /x.x\\");
+        }
     }
 }
 
