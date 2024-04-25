@@ -207,6 +207,8 @@ void ServerUDP::ppcb_receive_data() {
         }
         catch (ppcb_exception &e) {
             auto* data = (data_packet_t*) recv_buffer;
+            fprintf(stderr, " [exception-error] ");
+            fflush(stderr);
             send_rjt(data->packet_number); // send RJT if the client sends an invalid packet
             throw;
         }
