@@ -21,11 +21,7 @@ int ClientTCP::create_connection_socket() {
 
 void ClientTCP::send_packet_to_server(void *packet, ssize_t packet_size) {
     assert(packet_size > 0);
-    fprintf(stderr, " -writen----... ");
-    fflush(stderr);
     auto bytes_sent = writen(sock, packet, packet_size);
-    fprintf(stderr, " ------writen-> ");
-    fflush(stderr);
     if (bytes_sent != packet_size)
         throw std::runtime_error("send (packet " + std::to_string(*(uint8_t*)packet) + ") - partial / failed write: "
                                  " " + std::to_string(bytes_sent) + " of " + std::to_string(packet_size) + " bytes");
