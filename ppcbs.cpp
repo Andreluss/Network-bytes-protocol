@@ -208,7 +208,7 @@ int tcp_handle_new_client(int listening_socket_fd) {
 }
 
 void sigint_handler(int signum) {
-    fprintf(stderr, " SIGINT received(%d). Closing the connection... \n", signum);
+    fprintf(stderr, " SIGINT received(%d). Shutting down... \n", signum);
     exit(0);
 }
 

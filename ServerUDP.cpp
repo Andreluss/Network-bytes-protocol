@@ -141,9 +141,13 @@ void ServerUDP::send_packet_to_client(void *packet, ssize_t packet_size) {
                              " expected: " + std::to_string(packet_size));
     }
 
-    memcpy(last_packet_sent, packet, packet_size);
-    last_packet_sent_size = packet_size;
-    last_packet_sent_type = *(uint8_t*)packet;
+    uint8_t packet_type = *(uint8_t*)packet;
+    if (packet_type == ACC_PACKET_TYPE || packet_type == CONACC_PACKET_TYPE) {
+        // save only the packets for retransmission from server to client (ACC, CONACC)
+        memcpy(last_packet_sent, packet, packet_size);
+        last_packet_sent_size = packet_size;
+        last_packet_sent_type = *(uint8_t*)packet;
+    }
 }
 
 // --------------- Protocol functions ---------------
