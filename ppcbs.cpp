@@ -157,7 +157,7 @@ int tcp_read_data_packets(int fd, uint64_t session_id, uint64_t data_length) {
     for (uint64_t next_packet_number = 0, bytes_received = 0; bytes_received < data_length; next_packet_number++) {
         // In TCP case, the packet is *always* from the client (no need to check the source).
         if (tcp_read_data_packet(fd, &data_packet, session_id) < 0) {
-            error("error while reading the data packet %d, connection rejected", next_packet_number);
+//            error("error while reading the data packet %d, connection rejected", next_packet_number);
             tcp_write_rjt(fd, session_id, next_packet_number);
             return -1;
         }
