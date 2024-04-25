@@ -1,9 +1,13 @@
 #include <stdexcept>
+#include <csignal> // for SIGPIPE and SIG_IGN
 #include "ClientTCP.h"
 
 int ClientTCP::create_connection_socket() {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) syserr("creating tcp socket");
+
+    // VERY IMPORTANT - this prevents the write() from crashing the server on broken PIPE error:
+    signal(SIGPIPE, SIG_IGN);
 
     // set a timeout for connecting via tcp
     // Actually, the client may connect anyway (because of tcp connect mechanism),
