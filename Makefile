@@ -1,5 +1,5 @@
 CC     = g++
-CFLAGS = -Wall -Wextra -O2 -std=gnu++17 -g
+CFLAGS = -Wall -Wextra -O2 -std=gnu++17
 LFLAGS =
 
 # Define the object files directory
