@@ -181,15 +181,11 @@ int main(int argc, char *argv[])
 
     // start the connection using the selected protocol
     if (strcmp(protocol, "tcp") == 0) {
-        tcp(&server_address, buf, buf_size);
+        ClientTCP(buf, buf_size, server_address, port).run();
     } else if (strcmp(protocol, "udp") == 0) {
         ClientUDP(buf, buf_size, server_address, port).run();
     } else if (strcmp(protocol, "udpr") == 0) {
         ClientUDPR(buf, buf_size, server_address, port).run();
-    } else {
-        fprintf(stderr, "What do you think we do here? We are not in Fidelio. \n");
-        // testing purposes
-        ClientTCP(buf, buf_size, server_address, port).run();
     }
 
     free(buf);
