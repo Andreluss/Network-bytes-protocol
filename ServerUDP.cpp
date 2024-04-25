@@ -205,6 +205,10 @@ void ServerUDP::ppcb_receive_data() {
                 return data->packet_number >= packet_number;
             });
         }
+        catch (ppcb_timeout_exception &e) {
+            throw; // rethrow the exception (so that ppcb_exception below is caught only when it is not a timeout)
+            // (i know it's a bit ugly, but it's the easiest way to handle this right now 1 day before the deadline)
+        }
         catch (ppcb_exception &e) {
             auto* data = (data_packet_t*) recv_buffer;
             fprintf(stderr, " [exception-error] ");
