@@ -21,12 +21,11 @@ int tcp_establish_connection(struct sockaddr_in *server_address) {
     if (sock < 0)
         syserr("socket");
 
-    fprintf(stderr, "Trying to connect to the server... ");
-    fflush(stderr);
+    debug("Trying to connect to the server... ");
     // connect to the server via TCP
     if (connect(sock, (struct sockaddr *) server_address, sizeof(*server_address)) == -1)
         syserr("connect");
-    fprintf(stderr, "CONNECTED!\n");
+    debug("CONNECTED!\n");
     // configure the socket timeouts
     struct timeval tv = {
             .tv_sec = MAX_WAIT,
@@ -45,10 +44,10 @@ uint64_t tcp_start_protocol(int sock, size_t buf_size) {
     uint64_t session_id = random_64();
 
     // send the CONN packet
-    fprintf(stderr, "Sending the CONN packet with data_length = %ld... \n", buf_size);
+    debug("Sending the CONN packet with data_length = %ld... \n", buf_size);
     conn_packet conn;
     conn_packet_init(&conn, session_id, TCP_PROTOCOL_ID, buf_size);
-    fprintf(stderr, "Conn packet data_length: %" PRIu64 "\n", conn.data_length);
+    debug("Conn packet data_length: %" PRIu64 "\n", conn.data_length);
     if (writen(sock, &conn, sizeof(conn)) != sizeof(conn))
         syserr("write (conn)");
 
@@ -82,18 +81,18 @@ void tcp_send_data_packets(int sock, uint64_t session_id, char* buf, size_t buf_
         size_t data_size = bytes_left >= DATA_PACKET_DATA_LENGTH ? DATA_PACKET_DATA_LENGTH : bytes_left;
 
         assert(DATA_PACKET_DATA_LENGTH <= DATA_PACKET_MAX_DATA_LENGTH);
-        fprintf(stderr, "--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
+        debug("--> Trying to send packet #%ld with data size %ld (total size: %ld)... ",
                         packet_number, data_size, DATA_PACKET_HEADER_LENGTH + data_size);
 
         tcp_send_data_packet(sock, session_id, packet_number, data_size, data_ptr);
         
-        fprintf(stderr, "OK\n");
+        debug("OK\n");
 
         bytes_left -= data_size;
         data_ptr += data_size;
         packet_number++;
     }
-    fprintf(stderr, "Sent %" PRIu64 " data packets. \n", packet_number);
+    debug("Sent %" PRIu64 " data packets. \n", packet_number);
 }
 
 void tcp_receive_rcvd_packet(int sock, uint64_t id) {
@@ -170,14 +169,14 @@ int main(int argc, char *argv[])
     uint16_t port = read_port(argv[3]);
     struct sockaddr_in server_address = get_server_address(host, port);
 
-    fprintf(stderr, "Reading data: \n");
+    debug("Reading data: \n");
     size_t buf_size;
     char* buf = read_data(&buf_size);
     if (buf_size == 0)
         fatal("empty input");
-    fprintf(stderr, "Read %" PRIu64 " bytes from stdin.\n", buf_size);
-    fprintf(stderr, "Client config -> [%s:%d via %s]\n", host, port, protocol);
-    fprintf(stderr, "-----------------------------------------------------\n");
+    debug("Read %" PRIu64 " bytes from stdin.\n", buf_size);
+    debug("Client config -> [%s:%d via %s]\n", host, port, protocol);
+    debug("-----------------------------------------------------\n");
 
     // start the connection using the selected protocol
     if (strcmp(protocol, "tcp") == 0) {

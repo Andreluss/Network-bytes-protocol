@@ -35,7 +35,7 @@ uint8_t ClientUDP::receive_packet_from_server(const std::function<bool(int, void
 
         // 2. Was server the packet sender?
         if (!sockaddr_in_equal(server_address, received_packet_address)) {
-            fprintf(stderr, "<-- [packet %d] from unknown sender: %s:%d\n",
+            debug("<-- [packet %d] from unknown sender: %s:%d\n",
                     received_packet_size > 0 ? *(uint8_t*)received_packet : -1,
                     inet_ntoa(received_packet_address.sin_addr), ntohs(received_packet_address.sin_port));
             continue;
@@ -48,7 +48,7 @@ uint8_t ClientUDP::receive_packet_from_server(const std::function<bool(int, void
             return packet_type;
         }
         else {
-            fprintf(stderr, "x-- skip %s filtered out\n", packet_short_info(packet_type, received_packet, false).c_str());
+            debug("x-- skip %s filtered out\n", packet_short_info(packet_type, received_packet, false).c_str());
         }
     }
     throw ppcb_timeout_exception("Timeout ;_;");

@@ -29,7 +29,7 @@ void Client::run() {
 void Client::ppcb_establish_connection() {
     session_id = random_64();
     conn_packet conn; conn_packet_init(&conn, session_id, c_protocol_id, data_to_send_size);
-    send_packet_to_server(&conn, sizeof(conn)); fprintf(stderr, "--> CONN \n");
+    send_packet_to_server(&conn, sizeof(conn)); debug("--> CONN \n");
 
     // receive packet from server which should be either conacc or connrjt
     uint8_t packet_type = receive_packet_from_server([&](int type, void* buf) {
@@ -51,7 +51,7 @@ void Client::ppcb_establish_connection() {
             throw ppcb_exception("invalid packet: " + packet_short_info(type, buf, false) + ", expected CONACC or CONRJT");
         }
     });
-    fprintf(stderr, "<-- %s\n", packet_type == CONACC_PACKET_TYPE ? "CONACC" : "CONRJT");
+    debug("<-- %s\n", packet_type == CONACC_PACKET_TYPE ? "CONACC" : "CONRJT");
     if (packet_type == CONRJT_PACKET_TYPE) {
         throw ppcb_exception("connection rejected - shutting down");
     }
@@ -66,7 +66,7 @@ void Client::ppcb_send_data() {
         data_packet_t data_packet; data_packet_init(&data_packet, session_id, packet_number, data_length, data_ptr);
 
         send_packet_to_server(&data_packet, DATA_PACKET_HEADER_LENGTH + data_length);
-        fprintf(stderr, "--> DATA #%zu [%zu bytes]\n", packet_number, data_length);
+        debug("--> DATA #%zu [%zu bytes]\n", packet_number, data_length);
 
         if (c_data_ack) {
             ppcb_get_ack(packet_number);
@@ -79,8 +79,7 @@ void Client::ppcb_send_data() {
 }
 
 void Client::ppcb_get_ack(uint64_t packet_number) {
-    fprintf(stderr, "[%zu] ", packet_number);
-    fflush(stderr);
+    debug("[%zu] ", packet_number);
     uint8_t packet_type = receive_packet_from_server([&](int type, void* buf) {
         // At this point, we are sure the packet is readable and came from the server.
         // Now the options are:
@@ -98,7 +97,7 @@ void Client::ppcb_get_ack(uint64_t packet_number) {
             if (acc->session_id != session_id) {
                 throw ppcb_exception("invalid session id: " + std::to_string(acc->session_id) + ", expected: " + std::to_string(session_id));
             }
-            fprintf(stderr, "<-- ACC #%zu\n", acc->packet_number);
+            debug("<-- ACC #%zu\n", acc->packet_number);
             return true;
         }
         else if (type == RJT_PACKET_TYPE) {
@@ -106,7 +105,7 @@ void Client::ppcb_get_ack(uint64_t packet_number) {
             if (rjt->session_id != session_id) {
                 throw ppcb_exception("invalid session id: " + std::to_string(rjt->session_id) + ", expected: " + std::to_string(session_id));
             }
-            fprintf(stderr, "<-- RJT #%zu\n", rjt->packet_number);
+            debug("<-- RJT #%zu\n", rjt->packet_number);
             return true;
         }
         else if (type == CONACC_PACKET_TYPE) return false; // if the old retransmissions came just now
@@ -129,7 +128,7 @@ void Client::ppcb_end_connection() {
                 throw ppcb_exception("<- rcvd: invalid session id: " + std::to_string(rcvd->session_id) + ", expected: " + std::to_string(session_id));
             }
             // print in green
-            fprintf(stderr, "\033[1;32m<-- RCVD\033[0m\n");
+            debug("\033[1;32m<-- RCVD\033[0m\n");
             return true;
         }
         else if (type == RJT_PACKET_TYPE) {
@@ -138,7 +137,7 @@ void Client::ppcb_end_connection() {
                 throw ppcb_exception("rjt: invalid session id: " + std::to_string(rjt->session_id) + ", expected: " + std::to_string(session_id));
             }
             // print in red
-            fprintf(stderr, "\033[1;31m<-- CONRJT\033[0m\n");
+            debug("\033[1;31m<-- CONRJT\033[0m\n");
             return true;
         }
         else {

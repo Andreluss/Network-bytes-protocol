@@ -51,7 +51,7 @@ int tcp_read_conn(int fd, conn_packet *conn) {
 
 // Returns a new socket connected to the server or -1 on error
 int tcp_establish_connection(int socket_fd) {
-    fprintf(stderr, "<*> ");
+    debug("<*> ");
     struct sockaddr_in client_address{};
     socklen_t address_length = sizeof(client_address);
     int client_fd = accept(socket_fd, (struct sockaddr *) &client_address, &address_length);
@@ -59,7 +59,7 @@ int tcp_establish_connection(int socket_fd) {
         error("accept");
         return -1;
     }
-    fprintf(stderr, "%s:%d\n", inet_ntoa(client_address.sin_addr),
+    debug("%s:%d\n", inet_ntoa(client_address.sin_addr),
             ntohs(client_address.sin_port));
 
     struct timeval tv = {
@@ -119,7 +119,7 @@ int tcp_write_rjt(int fd, uint64_t session_id, uint64_t packet_number) {
 }
 
 int tcp_write_rcvd(int fd, uint64_t session_id) {
-    fprintf(stderr, "--> RCVD \n");
+    debug("--> RCVD \n");
     rcvd_packet rcvd;
     rcvd_packet_init(&rcvd, session_id);
     if (writen(fd, &rcvd, sizeof(rcvd)) != sizeof(rcvd)) {
@@ -199,7 +199,7 @@ int tcp_handle_new_client(int listening_socket_fd) {
         return -1;
     }
     // Close the connection.
-    fprintf(stderr, "<x> \n");
+    debug("<x> \n");
     if (close(fd) < 0) {
         syserr("close");
     }
@@ -208,7 +208,7 @@ int tcp_handle_new_client(int listening_socket_fd) {
 }
 
 void sigint_handler(int signum) {
-    fprintf(stderr, " SIGINT received(%d). Shutting down... \n", signum);
+    debug(" SIGINT received(%d). Shutting down... \n", signum);
     exit(0);
 }
 
@@ -245,7 +245,7 @@ void sigint_handler(int signum) {
     }
 
     while(true) {
-        printf("--------------------------------\n");
+        debug("--------------------------------\n");
         tcp_handle_new_client(socket_fd);
     }
 }

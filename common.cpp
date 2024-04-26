@@ -161,6 +161,17 @@ void error(const char* fmt, ...) {
     fprintf(stderr, "\n");
 }
 
+void debug(const char* fmt, ...) {
+    if (!DEBUG) return;
+    va_list fmt_args;
+
+    va_start(fmt_args, fmt);
+    vfprintf(stderr, fmt, fmt_args);
+    va_end(fmt_args);
+
+    fflush(stderr);
+}
+
 int64_t measure_time_microseconds(const std::function<void()> &fun) {
     using std::chrono::system_clock, std::chrono::time_point, std::chrono::duration_cast, std::chrono::microseconds;
     time_point<system_clock> start = system_clock::now();

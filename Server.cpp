@@ -12,7 +12,7 @@ void Server::run() {
     // Signal handling - to ensure that the server will close the port.
     struct sigaction action{};
     action.sa_handler = [](int sig) {
-        fprintf(stderr, " Signal %d received \\['']/ - closing!\n", sig);
+        debug(" Signal %d received \\['']/ - closing!\n", sig);
         exit(0);
     };
     sigemptyset(&action.sa_mask);
@@ -24,7 +24,7 @@ void Server::run() {
             new_session();
         }
         catch (const ppcb_exception& e) {
-            fprintf(stderr, "ERROR: %s ->- disconnected /x.x\\\n", e.what());
+            fprintf( stderr, "ERROR: %s ->- disconnected /x.x\\\n", e.what());
         }
         catch (const std::runtime_error& e) {
             error("runtime-error -> %s", e.what());

@@ -15,10 +15,10 @@ int ClientTCP::create_connection_socket() {
 
     set_socket_recv_timeout(sock, MAX_WAIT, 0);
 
-    fprintf(stderr, "Connecting TCP socket to server... "); fflush(stderr);
+    debug("Connecting TCP socket to server... "); // fflush(stderr);
     if (connect(sock, (struct sockaddr *) &server_address, sizeof(server_address)) == -1)
         syserr("connect");
-    fprintf(stderr, "Connected!\n");
+    debug("Connected!\n");
 
     return sock;
 }
@@ -53,7 +53,7 @@ uint8_t ClientTCP::receive_packet_from_server(const std::function<bool(int, void
             return packet_type;
         }
         else {
-            fprintf(stderr, "x-- skip %s filtered out\n", packet_short_info(packet_type, received_packet, false).c_str());
+            debug("x-- skip %s filtered out\n", packet_short_info(packet_type, received_packet, false).c_str());
         }
     }
     throw ppcb_timeout_exception("Timeout ;_;");

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <sys/types.h>
 #include <functional>
+#define DEBUG 0
 
 uint16_t read_port(char const *string);
 struct sockaddr_in get_server_address(char const *host, uint16_t port);
@@ -18,6 +19,8 @@ void set_socket_recv_timeout(int socket_fd, int timeout_seconds, int timeout_mic
 [[noreturn]] void syserr(const char* fmt, ...);
 [[noreturn]] void fatal(const char* fmt, ...);
 void error(const char* fmt, ...);
+
+void debug(const char* fmt, ...);
 
 int64_t measure_time_microseconds(const std::function<void()> &fun);
 

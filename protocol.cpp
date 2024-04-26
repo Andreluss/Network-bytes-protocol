@@ -111,11 +111,13 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     // flush stdout to make sure the data is printed
     fflush(stdout);
 
-    fprintf(stderr, "<-- %" PRIu64 ", ", data_packet->packet_number);
-    fprintf(stderr, "%2" PRIu32 "B [", data_packet->data_length);
-    writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
-    fprintf(stderr, "]%s", end.c_str());
-    fflush(stderr);
+    if (DEBUG) {
+        debug("<-- %" PRIu64 ", ", data_packet->packet_number);
+        debug("%2" PRIu32 "B [", data_packet->data_length);
+        writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
+        debug("]%s", end.c_str());
+        fflush(stderr);
+    }
 
     return 0;
 }
@@ -153,7 +155,7 @@ ssize_t read_packet_from_stream(int sock, void* buffer) {
         uint32_t data_length = ((data_packet_t*) buffer)->data_length;
         data_length = be32toh(data_length);
         if (data_length > DATA_PACKET_MAX_DATA_LENGTH || data_length == 0) {
-            fprintf(stderr, "~ tcp read - invalid data length: %d\n", data_length);
+            debug("~ tcp read - invalid data length: %d\n", data_length);
             return -1;
         }
         if (read_n_bytes(data_length) < 0) return -1;

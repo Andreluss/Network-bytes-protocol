@@ -70,7 +70,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
         }
     }
     catch (ppcb_skipped_packed_exception &e) {
-        fprintf(stderr, "x-- skip %s \n", e.what());
+        debug("x-- skip %s \n", e.what());
     }
     return false;
 }
@@ -108,7 +108,7 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                fprintf(stderr, "-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent,
+                debug("-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent,
                                                                           true).c_str(),
                         retransmissions - retransmissions_left + 1, retransmissions);
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
@@ -128,7 +128,7 @@ uint8_t ServerUDP::receive_packet_from_all(std::function<bool(int, void *)> matc
         if (check_recv_packet(match_packet, received_length, true)) {
             return *(uint8_t*)recv_buffer;
         }
-        fprintf(stderr, "<*> "); fflush(stderr);
+        debug("<*> ");
     }
 }
 
@@ -154,10 +154,10 @@ void ServerUDP::send_packet_to_client(void *packet, ssize_t packet_size) {
 
 void ServerUDP::ppcb_establish_connection() {
     // Wait for a connection packet.
-    fprintf(stderr, "<*> ");
+    debug("<*> ");
     receive_packet_from_all([](int type, void */*buf*/) {
         return type == CONN_PACKET_TYPE;
-    }); fprintf(stderr, "CONN ");
+    }); debug("CONN ");
     auto* conn = (conn_packet*) recv_buffer;
     if (conn->protocol_id != UDP_PROTOCOL_ID && conn->protocol_id != UDPR_PROTOCOL_ID) {
         throw ppcb_exception("invalid protocol id, expected: UDP_PROTOCOL_ID or UDPR_PROTOCOL_ID, "
@@ -170,24 +170,24 @@ void ServerUDP::ppcb_establish_connection() {
     session.session_id = conn->session_id;
     session.client_address = recv_packet_address;
     if (conn->protocol_id == UDPR_PROTOCOL_ID) {
-        fprintf(stderr, "UDPR [");
+        debug("UDPR [");
         retransmissions = MAX_RETRANSMITS;
     }
     else {
-        fprintf(stderr, "UDP [");
+        debug("UDP [");
         retransmissions = 0;
     }
-    fprintf(stderr, "%s:%d]\n", inet_ntoa(recv_packet_address.sin_addr), ntohs(recv_packet_address.sin_port));
+    debug("%s:%d]\n", inet_ntoa(recv_packet_address.sin_addr), ntohs(recv_packet_address.sin_port));
 
     // Send back the CONACC packet.
     conacc_packet conacc; conacc_packet_init(&conacc, session.session_id);
-    fprintf(stderr, "--> CONACC\n");
+    debug("--> CONACC\n");
     send_packet_to_client(&conacc, sizeof(conacc));
 }
 
 void ServerUDP::ppcb_receive_data() {
     auto send_rjt = [&](uint64_t packet_number) {
-        fprintf(stderr, "--> RJT\n");
+        debug("--> RJT\n");
         rjt_packet rjt; rjt_packet_init(&rjt, session.session_id, packet_number);
         send_packet_to_client(&rjt, sizeof(rjt));
     };
@@ -211,7 +211,7 @@ void ServerUDP::ppcb_receive_data() {
         }
         catch (ppcb_exception &e) {
             auto* data = (data_packet_t*) recv_buffer;
-            fprintf(stderr, " [exception-error] ");
+            debug(" [exception-error] ");
             fflush(stderr);
             send_rjt(data->packet_number); // send RJT if the client sends an invalid packet
             throw;
@@ -238,17 +238,17 @@ void ServerUDP::ppcb_receive_data() {
 
         // send the ACC confirmation to the client if the protocol is UDPR
         if (retransmissions > 0) {
-            fprintf(stderr, "--> ACC");
+            debug("--> ACC");
             acc_packet acc; acc_packet_init(&acc, session.session_id, packet_number);
             send_packet_to_client(&acc, sizeof(acc));
         }
-//        fprintf(stderr, (bytes_received < session.data_length) ? "\r" : "\n");
-        fprintf(stderr, "\n");
+//        debug((bytes_received < session.data_length) ? "\r" : "\n");
+        debug("\n");
     }
 }
 
 void ServerUDP::ppcb_end_connection() {
-    fprintf(stderr, "--> RCVD \n");
+    debug("--> RCVD \n");
     rcvd_packet rcvd; rcvd_packet_init(&rcvd, session.session_id);
     send_packet_to_client(&rcvd, sizeof(rcvd));
 }
