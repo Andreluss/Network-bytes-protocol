@@ -108,11 +108,12 @@ uint8_t ServerUDP::receive_packet_from_client(const std::function<bool(int type,
             return packet_type;
         } else {
             if (retransmissions_left > 0) {
-                debug("-r> %s (try %d/%d)\n", packet_short_info(last_packet_sent_type, last_packet_sent,
+                debug("-r> %s (try %d/%d) sent to %s:%d\n", packet_short_info(last_packet_sent_type, last_packet_sent,
                                                                           true).c_str(),
-                        retransmissions - retransmissions_left + 1, retransmissions);
+                        retransmissions - retransmissions_left + 1, retransmissions,
+                        inet_ntoa(session.client_address.sin_addr), ntohs(session.client_address.sin_port));
                 send_packet_to_client(last_packet_sent, last_packet_sent_size);
-                continue;
+//                continue;
             } else {
                 throw ppcb_timeout_exception(";_; Timeout - packet didn't arrive");
             }
