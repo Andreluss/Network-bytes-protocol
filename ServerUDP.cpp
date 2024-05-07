@@ -70,7 +70,7 @@ bool ServerUDP::check_recv_packet(const std::function<bool(int, void *)> &match_
         }
     }
     catch (ppcb_skipped_packed_exception &e) {
-        debug("x-- skip %s \n", e.what());
+        fprintf(stderr, "x-- skip %s \n", e.what());
     }
     return false;
 }
