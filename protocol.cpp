@@ -114,7 +114,10 @@ int print_data_packet(data_packet_t *data_packet, const std::string &end) {
     if (DEBUG) {
         debug("<-- %" PRIu64 ", ", data_packet->packet_number);
         debug("%2" PRIu32 "B [", data_packet->data_length);
-        writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
+        if (data_packet->data_length < 50)
+            writen(STDERR_FILENO, data_packet->data, data_packet->data_length);
+        else
+            writen(STDERR_FILENO, "...", 3);
         debug("]%s", end.c_str());
         fflush(stderr);
     }
