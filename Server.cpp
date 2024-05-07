@@ -48,6 +48,14 @@ void Server::_setup_socket_with(int socket_type) {
         syserr("cannot create a socket");
     }
 
+    // ------------------ warning ---------------------------
+    // Enable address reuse.
+    int optval = 1;
+    if (setsockopt(connection_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        syserr("setsockopt");
+    }
+    // ------------------ warning ---------------------------
+
     // Bind the socket to a concrete address.
     struct sockaddr_in server_address{};
     server_address.sin_family = AF_INET; // IPv4

@@ -135,7 +135,8 @@ uint8_t ServerUDP::receive_packet_from_all(std::function<bool(int, void *)> matc
 void ServerUDP::send_packet_to_client(void *packet, ssize_t packet_size) {
     if (packet_size == 0) return;
     ssize_t bytes_sent = sendto(session.session_fd, packet, packet_size, 0,
-                             (struct sockaddr *) &recv_packet_address, recv_packet_address_len);
+                                (struct sockaddr *) &session.client_address, sizeof(session.client_address));
+                             //(struct sockaddr *) &recv_packet_address, recv_packet_address_len);
     if (bytes_sent != packet_size) {
         throw ppcb_exception("sendto: sent " + std::to_string(bytes_sent) + " bytes,"
                              " expected: " + std::to_string(packet_size));
