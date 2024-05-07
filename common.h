@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <sys/types.h>
 #include <functional>
-#define DEBUG 0
+#define DEBUG 1
 
 uint16_t read_port(char const *string);
 struct sockaddr_in get_server_address(char const *host, uint16_t port);
